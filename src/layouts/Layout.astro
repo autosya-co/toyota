@@ -20,6 +20,86 @@ const { title } = Astro.props;
 		<script is:inline src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
 		<script is:inline src="https://unpkg.com/lucide@latest"></script>
 		<script is:inline src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
+
+		<!-- Google Identity Services -->
+		<script is:inline src="https://accounts.google.com/gsi/client" async defer></script>
+		<script is:inline>
+			// Global auth configuration
+			window.ADMIN_EMAILS = ['autosya.co@gmail.com'];
+			window.GOOGLE_CLIENT_ID = '733267797443-c7qf50rp48h73cvameiu5ukj3ma9p9t8.apps.googleusercontent.com';
+
+			// Check auth state immediately to prevent flicker
+			if (typeof localStorage !== 'undefined' && localStorage.getItem('isAdmin') === 'true') {
+				document.documentElement.classList.add('is-admin');
+			}
+
+			function handleCredentialResponse(response) {
+				try {
+					const token = response.credential;
+					const base64Url = token.split('.')[1];
+					const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+					const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
+						return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+					}).join(''));
+					
+					const payload = JSON.parse(jsonPayload);
+					
+					if (window.ADMIN_EMAILS.includes(payload.email)) {
+						localStorage.setItem('isAdmin', 'true');
+						localStorage.setItem('adminEmail', payload.email);
+						document.documentElement.classList.add('is-admin');
+						alert('¡Bienvenido administrador!');
+						window.location.reload();
+					} else {
+						alert('Tu correo (' + payload.email + ') no tiene permisos de administrador.');
+						localStorage.removeItem('isAdmin');
+					}
+				} catch(e) {
+					console.error("Error decodificando JWT:", e);
+				}
+			}
+
+			window.initGoogleAuth = function() {
+				if (window.google) {
+					window.google.accounts.id.initialize({
+						client_id: window.GOOGLE_CLIENT_ID,
+						callback: handleCredentialResponse,
+						auto_select: true // Intenta loguear automáticamente si la sesión está abierta en Chrome
+					});
+					
+					if (localStorage.getItem('isAdmin') !== 'true') {
+						window.google.accounts.id.prompt();
+					}
+				}
+			};
+
+			window.addEventListener('load', function() {
+				const checkGoogle = setInterval(() => {
+					if (window.google && window.google.accounts) {
+						clearInterval(checkGoogle);
+						window.initGoogleAuth();
+					}
+				}, 100);
+			});
+		</script>
+		<style is:inline>
+			/* Clases utilitarias para elementos de administrador */
+			.admin-only, .admin-only-flex, .admin-only-block, .admin-only-inline {
+				display: none !important;
+			}
+			html.is-admin .admin-only {
+				display: inherit !important;
+			}
+			html.is-admin .admin-only-block {
+				display: block !important;
+			}
+			html.is-admin .admin-only-flex {
+				display: flex !important;
+			}
+			html.is-admin .admin-only-inline {
+				display: inline-block !important;
+			}
+		</style>
 	</head>
 	<body class="bg-gray-50 min-h-screen font-sans text-gray-800">
 		<slot />

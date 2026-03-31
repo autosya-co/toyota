@@ -20,10 +20,24 @@
     </div>
 
     <!-- Botón Oculto/Admin subir vehículo -->
-    <div class="hidden md:block">
-      <a href="/add" class="text-xs bg-gray-100 text-gray-400 hover:bg-red-50 hover:text-red-600 px-3 py-1.5 rounded transition font-medium">
-        Subir Vehículo
-      </a>
+    <div class="hidden md:block admin-only-block" id="adminOptions">
+      <div class="flex gap-2">
+        <a href="/add" class="text-xs bg-gray-100 text-gray-400 hover:bg-red-50 hover:text-red-600 px-3 py-1.5 rounded transition font-medium">
+          Subir Vehículo
+        </a>
+        <button onclick="if(window.logoutAdmin) window.logoutAdmin()" class="text-xs bg-gray-100 text-gray-400 hover:bg-gray-200 px-3 py-1.5 rounded transition font-medium">
+          Salir
+        </button>
+      </div>
     </div>
+    <script is:inline>
+      window.logoutAdmin = function() {
+        if (typeof localStorage !== 'undefined') {
+          localStorage.removeItem('isAdmin');
+          localStorage.removeItem('adminEmail');
+          window.location.reload();
+        }
+      }
+    </script>
   </div>
 </nav>

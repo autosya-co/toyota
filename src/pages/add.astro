@@ -4,6 +4,12 @@ import Navbar from '../components/Navbar.astro';
 ---
 
 <Layout title="Añadir Vehículo">
+  <script is:inline>
+    // Proteger ruta de admins
+    if (typeof localStorage !== 'undefined' && localStorage.getItem('isAdmin') !== 'true') {
+      window.location.href = '/';
+    }
+  </script>
   <Navbar />
   
   <div class="max-w-4xl mx-auto bg-white rounded-xl shadow-md p-8 border border-gray-200 shadow-sm mt-8 mb-8">
