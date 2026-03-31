@@ -1,0 +1,298 @@
+---
+import Layout from '../layouts/Layout.astro';
+import Navbar from '../components/Navbar.astro';
+import FiltrosSidebar from '../components/FiltrosSidebar.astro';
+---
+
+<Layout title="Catálogo de Vehículos Toyota Usados">
+  <Navbar />
+
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8" id="inventario">
+    <div class="bg-white p-2 rounded-xl shadow-sm border border-gray-200 mb-8 flex">
+      <div class="flex-1 relative flex items-center">
+        <i data-lucide="search" class="absolute left-4 text-gray-400 w-5 h-5"></i>
+        <input
+          type="text"
+          id="buscador"
+          placeholder="Buscar por palabra clave..."
+          class="w-full pl-12 pr-12 py-3 bg-transparent text-gray-800 placeholder-gray-400 focus:outline-none text-lg"
+        />
+        <button
+          onclick="abrirMenuFiltros()"
+          class="absolute right-2 p-2 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-lg transition text-red-600"
+          title="Ver Filtros"
+        >
+          <i data-lucide="sliders-horizontal" class="w-5 h-5"></i>
+        </button>
+      </div>
+    </div>
+
+    <div id="loading" class="flex flex-col items-center justify-center py-20">
+      <i data-lucide="loader-2" class="w-10 h-10 text-red-600 animate-spin mb-4"></i>
+      <p class="text-gray-500 font-medium">Cargando el inventario disponible...</p>
+    </div>
+
+    <div id="catalogoGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 hidden">
+    </div>
+
+    <!-- Spinner para Cargar Más -->
+    <div id="loadingMas" class="hidden flex-col items-center justify-center py-10 mt-4">
+      <i data-lucide="loader-2" class="w-8 h-8 text-red-600 animate-spin mb-2"></i>
+      <p class="text-gray-500 font-medium text-sm">Cargando más vehículos...</p>
+    </div>
+
+    <div id="sinResultados" class="hidden text-center py-20">
+      <p class="text-xl text-gray-500 font-medium">No encontramos vehículos con esos filtros.</p>
+      <button onclick="limpiarFiltros()" class="mt-4 text-red-600 hover:underline">Ver todos los vehículos</button>
+    </div>
+  </div>
+
+  <FiltrosSidebar />
+
+  <script is:inline>
+    // =========================================================================
+    const URL_CSV_GOOGLE_SHEET = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQUXSBa4HqBFoaoXLVQW8Pvh7BRTfIhc3K8fz9wqBZHrE3DM1oo-A5v-5vsB74osUxNYOD5zEFA60vF/pub?gid=1038341741&single=true&output=csv";
+    // =========================================================================
+
+    let inventarioGlobal = [];
+    let inventarioFiltradoGlobal = [];
+    let cargadosActuales = 0;
+    const CARGAR_POR_PAGINA = 15;
+    let cargandoMas = false;
+
+    const formatearDinero = (cantidad) => {
+      return new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }).format(cantidad);
+    };
+
+    const formatearKm = (km) => {
+      return new Intl.NumberFormat('es-CO').format(km) + ' km';
+    };
+
+    const slugify = (text) => {
+      if(!text) return 'auto';
+      return text.toString().toLowerCase()
+        .trim()
+        .normalize('NFD') 
+        .replace(/[\u0300-\u036f]/g, "") 
+        .replace(/\s+/g, '-')           
+        .replace(/[^\w\-]+/g, '')       
+        .replace(/\-\-+/g, '-');        
+    };
+
+    function cargarCatalogo() {
+      if (!URL_CSV_GOOGLE_SHEET || URL_CSV_GOOGLE_SHEET === "TU_URL_DEL_CSV_AQUI") {
+        document.getElementById('loading').innerHTML = '<p class="text-red-500 font-bold">Falta configurar la URL del CSV en el código.</p>';
+        return;
+      }
+
+      Papa.parse(URL_CSV_GOOGLE_SHEET, {
+        download: true,
+        header: true,
+        complete: function (results) {
+          inventarioGlobal = results.data.filter(carro => carro.ID && carro.Title && carro['Categorías'] && carro['Categorías'].toLowerCase().includes('toyota'));
+          llenarFiltros(inventarioGlobal);
+          document.getElementById('loading').classList.add('hidden');
+          document.getElementById('catalogoGrid').classList.remove('hidden');
+          aplicarFiltros();
+        },
+        error: function (err) {
+          document.getElementById('loading').innerHTML = '<p class="text-red-500 font-bold">Error al cargar el inventario.</p>';
+        }
+      });
+    }
+
+    function llenarFiltros(datos) {
+      const anios = new Set();
+      const modelos = new Set();
+      datos.forEach(carro => {
+        if (carro.a_o) anios.add(carro.a_o);
+        if (carro['Categorías']) {
+          const partes = carro['Categorías'].split('>');
+          if (partes.length > 1) {
+            modelos.add(partes[1].trim());
+          }
+        }
+      });
+
+      const selectModelo = document.getElementById('filtroModelo');
+      Array.from(modelos).sort().forEach(modelo => {
+        selectModelo.insertAdjacentHTML('beforeend', `<option value="${modelo}">${modelo}</option>`);
+      });
+
+      const selectAnio = document.getElementById('filtroAnio');
+      Array.from(anios).sort((a, b) => b - a).forEach(anio => {
+        selectAnio.insertAdjacentHTML('beforeend', `<option value="${anio}">${anio}</option>`);
+      });
+    }
+
+    function cargarMasVehiculos() {
+      if (cargandoMas || cargadosActuales >= inventarioFiltradoGlobal.length) return;
+      cargandoMas = true;
+
+      const grid = document.getElementById('catalogoGrid');
+      const loadingMas = document.getElementById('loadingMas');
+
+      loadingMas.classList.remove('hidden');
+      loadingMas.classList.add('flex');
+
+      setTimeout(() => {
+        const siguientesV = inventarioFiltradoGlobal.slice(cargadosActuales, cargadosActuales + CARGAR_POR_PAGINA);
+
+        siguientesV.forEach(carro => {
+          let urlImagen = 'https://via.placeholder.com/400x300?text=Sin+Imagen';
+          if (carro.Images) {
+            const idsDrive = carro.Images.split('|');
+            if (idsDrive.length > 0 && idsDrive[0].trim() !== '') {
+              urlImagen = `https://drive.google.com/thumbnail?id=${idsDrive[0].trim()}&sz=w800`;
+            }
+          }
+
+          let marca = 'Vehículo';
+          if (carro['Categorías']) {
+            marca = carro['Categorías'].split('>')[0].trim();
+          }
+
+          const tarjeta = `
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-lg transition flex flex-col fade-in">
+              <a href="/${carro.ID}/${slugify(carro.Title)}" class="relative aspect-[4/3] bg-gray-100 block group overflow-hidden">
+                <img src="${urlImagen}" alt="${carro.Title}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" loading="lazy" referrerpolicy="no-referrer">
+                <div class="absolute top-2 left-2 bg-red-600 text-white text-xs font-bold px-2 py-1 rounded">
+                  ${marca}
+                </div>
+              </a>
+              <div class="p-5 flex flex-col flex-grow">
+                <h2 class="text-lg font-bold text-gray-900 leading-tight mb-2 line-clamp-2">${carro.Title}</h2>
+                <div class="text-2xl font-extrabold text-red-700 mb-4">${formatearDinero(carro.Price || 0)}</div>
+                
+                <div class="grid grid-cols-2 gap-y-2 text-sm text-gray-600 mb-4 flex-grow">
+                  <div class="flex items-center gap-1.5"><i data-lucide="calendar" class="w-4 h-4 text-gray-400"></i> ${carro.a_o || 'N/A'}</div>
+                  <div class="flex items-center gap-1.5"><i data-lucide="gauge" class="w-4 h-4 text-gray-400"></i> ${carro.Mileage ? formatearKm(carro.Mileage) : '0 km'}</div>
+                  <div class="flex items-center gap-1.5"><i data-lucide="settings-2" class="w-4 h-4 text-gray-400"></i> ${carro.Transmission || 'N/A'}</div>
+                  <div class="flex items-center gap-1.5"><i data-lucide="map-pin" class="w-4 h-4 text-gray-400"></i> <span class="truncate">${carro.ciudad_de_la_placa || 'Colombia'}</span></div>
+                </div>
+                
+                <div class="mt-auto pt-4 border-t border-gray-100 flex gap-2">
+                   <a href="/${carro.ID}/${slugify(carro.Title)}" class="flex-1 text-center bg-gray-100 hover:bg-gray-200 text-gray-800 font-semibold py-2 rounded transition text-sm flex items-center justify-center">Ver Detalles</a>
+                   
+                   <a href="/edit?id=${carro.ID}" class="px-3 bg-amber-100 hover:bg-amber-200 text-amber-800 rounded flex items-center justify-center transition" title="Editar Vehículo">
+                     <i data-lucide="pencil" class="w-4 h-4"></i>
+                   </a>
+                </div>
+              </div>
+            </div>
+          `;
+          grid.insertAdjacentHTML('beforeend', tarjeta);
+        });
+
+        if (window.lucide) {
+          window.lucide.createIcons();
+        }
+        
+        cargadosActuales += siguientesV.length;
+        cargandoMas = false;
+
+        if (cargadosActuales >= inventarioFiltradoGlobal.length) {
+          loadingMas.classList.add('hidden');
+          loadingMas.classList.remove('flex');
+        } else {
+          loadingMas.classList.remove('hidden');
+          loadingMas.classList.add('flex');
+        }
+      }, 600);
+    }
+
+    function aplicarFiltros() {
+      const texto = document.getElementById('buscador').value.toLowerCase();
+      const modelo = document.getElementById('filtroModelo').value;
+      const anio = document.getElementById('filtroAnio').value;
+
+      inventarioFiltradoGlobal = inventarioGlobal.filter(carro => {
+        const cumpleTexto = carro.Title.toLowerCase().includes(texto) || (carro['Categorías'] && carro['Categorías'].toLowerCase().includes(texto));
+        const cumpleAnio = anio === "" || carro.a_o === anio;
+        
+        let cumpleModelo = true;
+        if (modelo !== "") {
+          cumpleModelo = carro['Categorías'] && carro['Categorías'].includes(">" + modelo);
+        }
+
+        return cumpleTexto && cumpleAnio && cumpleModelo;
+      });
+
+      inventarioFiltradoGlobal = [...inventarioFiltradoGlobal].reverse();
+
+      const grid = document.getElementById('catalogoGrid');
+      const sinResultados = document.getElementById('sinResultados');
+      const loadingMas = document.getElementById('loadingMas');
+
+      grid.innerHTML = '';
+      cargadosActuales = 0;
+
+      if (inventarioFiltradoGlobal.length === 0) {
+        grid.classList.add('hidden');
+        sinResultados.classList.remove('hidden');
+        loadingMas.classList.add('hidden');
+        loadingMas.classList.remove('flex');
+        return;
+      }
+
+      grid.classList.remove('hidden');
+      sinResultados.classList.add('hidden');
+      cargarMasVehiculos();
+    }
+
+    function limpiarFiltros() {
+      document.getElementById('buscador').value = "";
+      document.getElementById('filtroAnio').value = "";
+      document.getElementById('filtroModelo').value = "";
+      aplicarFiltros();
+    }
+
+    document.getElementById('buscador').addEventListener('input', aplicarFiltros);
+    document.getElementById('filtroAnio').addEventListener('change', aplicarFiltros);
+    document.getElementById('filtroModelo').addEventListener('change', aplicarFiltros);
+
+    // Funciones filtros Sidebar
+    window.abrirMenuFiltros = function() {
+      const modal = document.getElementById('modalFiltros');
+      const sidebar = document.getElementById('sidebarFiltros');
+      modal.classList.remove('hidden');
+      document.body.style.overflow = 'hidden';
+      setTimeout(() => {
+        modal.classList.remove('opacity-0', 'pointer-events-none');
+        sidebar.classList.remove('translate-x-full');
+      }, 10);
+    }
+
+    window.cerrarMenuFiltros = function() {
+      const modal = document.getElementById('modalFiltros');
+      const sidebar = document.getElementById('sidebarFiltros');
+      modal.classList.add('opacity-0', 'pointer-events-none');
+      sidebar.classList.add('translate-x-full');
+
+      document.body.style.overflow = '';
+      
+      setTimeout(() => {
+        modal.classList.add('hidden');
+      }, 300);
+    }
+
+    document.getElementById('modalFiltros').addEventListener('click', function (e) {
+      if (e.target === this) window.cerrarMenuFiltros();
+    });
+
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape') {
+        if (!document.getElementById('modalFiltros').classList.contains('hidden')) window.cerrarMenuFiltros();
+      }
+    });
+
+    window.addEventListener('scroll', () => {
+      const { scrollTop, scrollHeight, clientHeight } = document.documentElement;
+      if (scrollTop + clientHeight >= scrollHeight - 400) {
+        cargarMasVehiculos();
+      }
+    });
+
+    cargarCatalogo();
+  </script>
+</Layout>

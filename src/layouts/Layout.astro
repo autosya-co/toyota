@@ -1,0 +1,32 @@
+---
+import '../styles/global.css';
+
+interface Props {
+	title: string;
+}
+import Footer from '../components/Footer.astro';
+
+const { title } = Astro.props;
+---
+
+<!doctype html>
+<html lang="es">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>{title} | Toyota Usados</title>
+		<!-- Imports for plugins previously loaded via CDN (Lucide, PapaParse, Sortable) -->
+		<!-- We load them from CDN as inline to keep the original logic untouched first, or use the node modules -->
+		<script is:inline src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+		<script is:inline src="https://unpkg.com/lucide@latest"></script>
+		<script is:inline src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
+	</head>
+	<body class="bg-gray-50 min-h-screen font-sans text-gray-800">
+		<slot />
+		<Footer />
+		<script is:inline>
+			// Inicializar los iconos Lucide en todas las páginas
+			lucide.createIcons();
+		</script>
+	</body>
+</html>
