@@ -5,8 +5,8 @@ import Navbar from '../components/Navbar.astro';
 
 <Layout title="Añadir Vehículo">
   <script is:inline>
-    // Proteger ruta de admins
-    if (typeof localStorage !== 'undefined' && localStorage.getItem('isAdmin') !== 'true') {
+    // Proteger ruta: Exclusivo para usuarios logueados
+    if (typeof localStorage !== 'undefined' && localStorage.getItem('isLoggedIn') !== 'true') {
       window.location.href = '/';
     }
   </script>
@@ -276,21 +276,41 @@ import Navbar from '../components/Navbar.astro';
             const canvas = document.createElement('canvas');
             const ctx = canvas.getContext('2d');
             canvas.width = img.width; canvas.height = img.height;
-            ctx.drawImage(img, 0, 0);
+            // PASO 1: Dibujar la imagen original en el canvas primero
+            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+            // PASO 2: Cargar Logo como Marca de Agua
+            const logo = new Image();
+            logo.crossOrigin = "anonymous";
+            logo.onload = () => {
+              // safeBase64 ahora captura la imagen original ya dibujada
+              let safeBase64 = "";
+              try { safeBase64 = canvas.toDataURL(fileObj.file.type); } catch(e) {}
 
-            const text = "toyotausados.com";
-            const fontSize = Math.max(20, Math.floor(canvas.height / 30));
-            ctx.font = "bold " + fontSize + "px sans-serif";
-            ctx.textAlign = "center"; ctx.textBaseline = "middle";
-            ctx.fillStyle = "rgba(255, 255, 255, 0.8)";
-            ctx.strokeStyle = "rgba(0, 0, 0, 0.5)";
-            ctx.lineWidth = Math.max(1, Math.floor(fontSize / 8));
-            ctx.lineJoin = "round";
-            const x = canvas.width / 2;
-            const y = canvas.height - (fontSize * 1.5);
-            ctx.strokeText(text, x, y); ctx.fillText(text, x, y);
+              const maxLogoWidth = canvas.width * 0.35;
+              const ratio = maxLogoWidth / logo.width;
+              const logoWidth = maxLogoWidth;
+              const logoHeight = logo.height * ratio;
 
-            resolve({ nombre: fileObj.file.name, tipo: fileObj.file.type, base64: canvas.toDataURL(fileObj.file.type) });
+              const x = (canvas.width / 2) - (logoWidth / 2);
+              const y = canvas.height - logoHeight - (canvas.height * 0.05);
+
+              try {
+                ctx.globalAlpha = 0.8;
+                ctx.drawImage(logo, x, y, logoWidth, logoHeight);
+                ctx.globalAlpha = 1.0;
+                resolve({ nombre: fileObj.file.name, tipo: fileObj.file.type, base64: canvas.toDataURL(fileObj.file.type) });
+              } catch(err) {
+                // Si CORS contamina el canvas, retornar imagen sin marca de agua (pero no negra)
+                resolve({ nombre: fileObj.file.name, tipo: fileObj.file.type, base64: safeBase64 });
+              }
+            };
+            logo.onerror = () => {
+              // Si falla el logo, subir la foto original sin marca de agua
+              try {
+                 resolve({ nombre: fileObj.file.name, tipo: fileObj.file.type, base64: canvas.toDataURL(fileObj.file.type) });
+              } catch(err){ resolve({ nombre: fileObj.file.name, tipo: fileObj.file.type, base64: "" }); }
+            };
+            logo.src = "https://lh3.googleusercontent.com/d/11WeKEM19rGyJQtjtyTFRDK_Y26QeYBSy";
           };
           img.src = eventoReader.target.result;
         };
@@ -339,7 +359,8 @@ import Navbar from '../components/Navbar.astro';
             tipo: document.getElementById('tipo').value,
             dueno: document.getElementById('dueno').value,
             contenido: document.getElementById('contenido').value,
-            archivos: archivosBase64
+            archivos: archivosBase64,
+            usuario: localStorage.getItem('userEmail') || ""
           };
 
           const respuesta = await fetch(URL_APPS_SCRIPT, { method: 'POST', body: JSON.stringify(payload) });

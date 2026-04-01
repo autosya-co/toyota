@@ -5,210 +5,236 @@ import Papa from 'papaparse';
 
 export async function getStaticPaths() {
   const URL_CSV = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQUXSBa4HqBFoaoXLVQW8Pvh7BRTfIhc3K8fz9wqBZHrE3DM1oo-A5v-5vsB74osUxNYOD5zEFA60vF/pub?gid=1038341741&single=true&output=csv";
-  
   const response = await fetch(URL_CSV);
   const csvText = await response.text();
-  
   const results = Papa.parse(csvText, { header: true });
   const inventario = results.data.filter((c: any) => c.ID && c.Title);
 
-  const slugify = (text: string) => {
-    return text.toString().toLowerCase()
-      .trim()
-      .normalize('NFD') // separa acentos
-      .replace(/[\u0300-\u036f]/g, "") // borra acentos
-      .replace(/\s+/g, '-')           // Replace spaces con -
-      .replace(/[^\w\-]+/g, '')       // Elimina chars raros
-      .replace(/\-\-+/g, '-');        // Dobles - a simples
-  };
+  const slugify = (text: string) =>
+    text.toString().toLowerCase().trim()
+      .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+      .replace(/\s+/g, '-').replace(/[^\w\-]+/g, '').replace(/\-\-+/g, '-');
 
-  return inventario.map((carro: any) => {
-    return {
-      params: { 
-        id: carro.ID.toString(),
-        titulo: slugify(carro.Title) 
-      },
-      props: { carro },
-    };
-  });
+  return inventario.map((carro: any) => ({
+    params: { id: carro.ID.toString(), titulo: slugify(carro.Title) },
+    props: { carro },
+  }));
 }
 
 const { carro } = Astro.props;
 
-// Funciones de formateo 
-const formatearDinero = (cantidad: any) => new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }).format(Number(cantidad) || 0);
-const formatearKm = (km: any) => km ? new Intl.NumberFormat('es-CO').format(Number(km)) + ' km' : '0 km';
+const formatearDinero = (cantidad: any) =>
+  new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }).format(Number(cantidad) || 0);
+const formatearKm = (km: any) =>
+  km ? new Intl.NumberFormat('es-CO').format(Number(km)) + ' km' : '0 km';
 
-// Extraer imágenes
 let idsDrive: string[] = [];
 if (carro.Images) {
   idsDrive = carro.Images.split('|').map((id: string) => id.trim()).filter((id: string) => id !== '');
 }
-const urlImagenPrincipal = idsDrive.length > 0 ? `https://drive.google.com/thumbnail?id=${idsDrive[0]}&sz=w800` : 'https://via.placeholder.com/800x600?text=Sin+Imagen';
 
-// Botón de WhatsApp
-let telefono = carro.dueno ? carro.dueno.toString().replace(/[^0-9\+]/g, '') : '';
-if (telefono && !telefono.startsWith('+') && telefono.length === 10) telefono = '+57' + telefono;
 const mensaje = encodeURIComponent(`Hola, estoy interesado en el vehículo *${carro.Title}* que vi en toyotausados.com.`);
-// Establecemos el teléfono duro como se solicitó para toyotausados.com
 const urlWhatsapp = 'https://wa.me/573202832616?text=' + mensaje;
 const anio = carro.a_o || '-';
+const totalImagenes = idsDrive.length;
 ---
 
 <Layout title={`${carro.Title} | Toyota Usados`}>
   <Navbar />
-  
-  <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12">
-    <!-- Botón volver -->
-    <a href="/" class="inline-flex items-center text-red-600 hover:text-red-800 font-medium mb-6 transition group">
-      <i data-lucide="arrow-left" class="w-5 h-5 mr-2 transform group-hover:-translate-x-1 transition"></i>
-      Volver al catálogo
-    </a>
 
-    <!-- Page Content -->
-    <div class="bg-white rounded-2xl shadow-xl overflow-hidden flex flex-col transform">
+  <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-10">
+    <div class="bg-white rounded-2xl shadow-xl overflow-hidden">
+
       <!-- Cabecera -->
       <div class="px-6 py-5 border-b border-gray-100 bg-gray-50">
-        <h1 class="text-2xl md:text-3xl font-extrabold text-gray-900 pr-4">{carro.Title}</h1>
+        <h1 class="text-2xl md:text-3xl font-extrabold text-gray-900">{carro.Title}</h1>
       </div>
 
-      <!-- Cuerpo -->
+      <!-- Cuerpo: 2 columnas en desktop -->
       <div class="p-6 md:p-8">
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-10">
-          
-          <!-- Columna Izquierda: Galería -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-10">
+
+          <!-- ─── Columna Izquierda: Carrusel ─── -->
           <div>
-            <div class="relative aspect-[4/3] bg-gray-100 rounded-xl overflow-hidden mb-4 border border-gray-200 shadow-inner">
-              <img
-                id="imagenPrincipalPage"
-                src={urlImagenPrincipal}
-                alt={`Foto principal de ${carro.Title}`}
-                class="w-full h-full object-contain bg-gray-50"
-                referrerpolicy="no-referrer"
-              />
-            </div>
-            
-            <!-- Miniaturas -->
-            {idsDrive.length > 0 && (
-              <div class="flex gap-3 py-2 overflow-x-auto pb-4 custom-scrollbar">
-                {idsDrive.map((id) => (
-                  <button
-                    type="button"
-                    class="miniatura-btn flex-shrink-0 w-24 h-16 md:w-28 md:h-20 rounded-md overflow-hidden ring-2 ring-transparent hover:ring-red-500 focus:outline-none focus:ring-red-500 transition shadow-sm opacity-80 hover:opacity-100"
-                    data-urlMax={`https://drive.google.com/thumbnail?id=${id}&sz=w800`}
-                  >
-                    <img src={`https://drive.google.com/thumbnail?id=${id}&sz=w200`} class="w-full h-full object-cover" alt="Miniatura" referrerpolicy="no-referrer" />
-                  </button>
-                ))}
+            {totalImagenes > 0 ? (
+              <div class="relative bg-black rounded-xl overflow-hidden" style="aspect-ratio: 4/3;">
+                <!-- Track -->
+                <div id="carouselTrack"
+                  class="flex h-full transition-transform duration-500 ease-in-out"
+                  style="width: 100%; height: 100%;">
+                  {idsDrive.map((id) => (
+                    <div class="flex-shrink-0 flex items-center justify-center bg-black"
+                      style="min-width: 100%; height: 100%;">
+                      <img
+                        src={`https://drive.google.com/thumbnail?id=${id}&sz=w1200`}
+                        alt={carro.Title}
+                        class="w-full h-full object-contain"
+                        referrerpolicy="no-referrer"
+                        loading="eager"
+                      />
+                    </div>
+                  ))}
+                </div>
+
+                {/* Flechas (solo si hay más de 1 imagen) */}
+                {totalImagenes > 1 && (
+                  <>
+                    <button id="prevBtn" aria-label="Anterior"
+                      class="absolute left-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/80 text-white w-9 h-9 rounded-full flex items-center justify-center transition z-10 shadow">
+                      <i data-lucide="chevron-left" class="w-5 h-5"></i>
+                    </button>
+                    <button id="nextBtn" aria-label="Siguiente"
+                      class="absolute right-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/80 text-white w-9 h-9 rounded-full flex items-center justify-center transition z-10 shadow">
+                      <i data-lucide="chevron-right" class="w-5 h-5"></i>
+                    </button>
+
+                    {/* Puntos */}
+                    <div class="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5 z-10">
+                      {idsDrive.map((_, i) => (
+                        <button
+                          class={`dot w-2 h-2 rounded-full transition-colors ${i === 0 ? 'bg-white' : 'bg-white/40'}`}
+                          data-index={i}
+                        ></button>
+                      ))}
+                    </div>
+                  </>
+                )}
+
+                {/* Contador */}
+                <div class="absolute top-2 right-3 bg-black/50 text-white text-xs px-2.5 py-1 rounded-full z-10 backdrop-blur-sm">
+                  <span id="currentImg">1</span> / {totalImagenes}
+                </div>
+              </div>
+            ) : (
+              <div class="aspect-[4/3] bg-gray-100 rounded-xl flex items-center justify-center text-gray-400">
+                <i data-lucide="image-off" class="w-12 h-12"></i>
               </div>
             )}
           </div>
 
-          <!-- Columna Derecha: Información -->
+          <!-- ─── Columna Derecha: Información ─── -->
           <div class="flex flex-col h-full">
-            <div class="text-4xl font-extrabold text-red-700 mb-8">
+            <!-- Precio -->
+            <div class="text-4xl font-extrabold text-red-700 mb-6">
               {formatearDinero(carro.Price)}
             </div>
 
-            <div class="grid grid-cols-2 gap-4 mb-8">
-              <div class="bg-gray-50 p-4 rounded-xl border border-gray-200 shadow-sm">
+            <!-- Datos clave -->
+            <div class="grid grid-cols-2 gap-3 mb-6">
+              <div class="bg-gray-50 p-3 rounded-xl border border-gray-200 shadow-sm">
                 <span class="text-xs text-gray-500 font-bold uppercase block mb-1 tracking-wider">Año</span>
-                <span class="font-bold text-gray-800 flex items-center gap-2 text-lg">
-                  <i data-lucide="calendar" class="w-5 h-5 text-red-600"></i> {anio}
+                <span class="font-bold text-gray-800 flex items-center gap-1.5 text-base">
+                  <i data-lucide="calendar" class="w-4 h-4 text-red-600"></i> {anio}
                 </span>
               </div>
-              <div class="bg-gray-50 p-4 rounded-xl border border-gray-200 shadow-sm">
+              <div class="bg-gray-50 p-3 rounded-xl border border-gray-200 shadow-sm">
                 <span class="text-xs text-gray-500 font-bold uppercase block mb-1 tracking-wider">Kilometraje</span>
-                <span class="font-bold text-gray-800 flex items-center gap-2 text-lg">
-                  <i data-lucide="gauge" class="w-5 h-5 text-red-600"></i> {formatearKm(carro.Mileage)}
+                <span class="font-bold text-gray-800 flex items-center gap-1.5 text-base">
+                  <i data-lucide="gauge" class="w-4 h-4 text-red-600"></i> {formatearKm(carro.Mileage)}
                 </span>
               </div>
-              <div class="bg-gray-50 p-4 rounded-xl border border-gray-200 shadow-sm">
+              <div class="bg-gray-50 p-3 rounded-xl border border-gray-200 shadow-sm">
                 <span class="text-xs text-gray-500 font-bold uppercase block mb-1 tracking-wider">Transmisión</span>
-                <span class="font-bold text-gray-800 flex items-center gap-2 text-lg">
-                  <i data-lucide="settings-2" class="w-5 h-5 text-red-600"></i> {carro.Transmission || '-'}
+                <span class="font-bold text-gray-800 flex items-center gap-1.5 text-base">
+                  <i data-lucide="settings-2" class="w-4 h-4 text-red-600"></i> {carro.Transmission || '-'}
                 </span>
               </div>
-              <div class="bg-gray-50 p-4 rounded-xl border border-gray-200 shadow-sm">
+              <div class="bg-gray-50 p-3 rounded-xl border border-gray-200 shadow-sm">
                 <span class="text-xs text-gray-500 font-bold uppercase block mb-1 tracking-wider">Combustible</span>
-                <span class="font-bold text-gray-800 flex items-center gap-2 text-lg">
-                  <i data-lucide="fuel" class="w-5 h-5 text-red-600"></i> {carro['Fuel '] || carro['Fuel'] || '-'}
+                <span class="font-bold text-gray-800 flex items-center gap-1.5 text-base">
+                  <i data-lucide="fuel" class="w-4 h-4 text-red-600"></i> {carro['Fuel '] || carro['Fuel'] || '-'}
                 </span>
               </div>
             </div>
 
-            <h4 class="font-bold text-gray-900 border-b-2 border-gray-200 pb-2 mb-4 uppercase text-sm tracking-wider">
+            <!-- Más especificaciones -->
+            <h4 class="font-bold text-gray-900 border-b-2 border-gray-200 pb-2 mb-3 uppercase text-xs tracking-wider">
               Más Especificaciones
             </h4>
-            <ul class="text-sm md:text-base text-gray-700 space-y-3 mb-8">
-              <li class="flex justify-between items-center"><span class="font-medium text-gray-500">Motor:</span> <span class="font-bold bg-gray-100 px-3 py-1 rounded">{carro.Engine || '-'}</span></li>
-              <li class="flex justify-between items-center"><span class="font-medium text-gray-500">Color:</span> <span class="font-bold bg-gray-100 px-3 py-1 rounded">{carro.color_ || '-'}</span></li>
-              <li class="flex justify-between items-center"><span class="font-medium text-gray-500">Placa terminada en:</span> <span class="font-bold bg-gray-100 px-3 py-1 rounded">{(carro.Plate_last_digit !== undefined && carro.Plate_last_digit !== null) ? carro.Plate_last_digit : '-'}</span></li>
-              <li class="flex justify-between items-center"><span class="font-medium text-gray-500">Ciudad placa:</span> <span class="font-bold bg-gray-100 px-3 py-1 rounded capitalize">{carro.ciudad_de_la_placa || '-'}</span></li>
-              <li class="flex justify-between items-center"><span class="font-medium text-gray-500">Nacionalidad:</span> <span class="font-bold bg-gray-100 px-3 py-1 rounded capitalize">{carro.nac || '-'}</span></li>
-              <li class="flex justify-between items-center"><span class="font-medium text-gray-500">Tipo:</span> <span class="font-bold bg-gray-100 px-3 py-1 rounded capitalize">{carro.tipo || '-'}</span></li>
+            <ul class="text-sm text-gray-700 space-y-2 mb-6">
+              <li class="flex justify-between items-center">
+                <span class="font-medium text-gray-500">Motor:</span>
+                <span class="font-bold bg-gray-100 px-3 py-0.5 rounded">{carro.Engine || '-'}</span>
+              </li>
+              <li class="flex justify-between items-center">
+                <span class="font-medium text-gray-500">Color:</span>
+                <span class="font-bold bg-gray-100 px-3 py-0.5 rounded">{carro.color_ || '-'}</span>
+              </li>
+              <li class="flex justify-between items-center">
+                <span class="font-medium text-gray-500">Placa termina en:</span>
+                <span class="font-bold bg-gray-100 px-3 py-0.5 rounded">
+                  {(carro.Plate_last_digit !== undefined && carro.Plate_last_digit !== null) ? carro.Plate_last_digit : '-'}
+                </span>
+              </li>
+              <li class="flex justify-between items-center">
+                <span class="font-medium text-gray-500">Ciudad placa:</span>
+                <span class="font-bold bg-gray-100 px-3 py-0.5 rounded capitalize">{carro.ciudad_de_la_placa || '-'}</span>
+              </li>
+              <li class="flex justify-between items-center">
+                <span class="font-medium text-gray-500">Nacionalidad:</span>
+                <span class="font-bold bg-gray-100 px-3 py-0.5 rounded capitalize">{carro.nac || '-'}</span>
+              </li>
+              <li class="flex justify-between items-center">
+                <span class="font-medium text-gray-500">Tipo:</span>
+                <span class="font-bold bg-gray-100 px-3 py-0.5 rounded capitalize">{carro.tipo || '-'}</span>
+              </li>
             </ul>
 
-            <h4 class="font-bold text-gray-900 border-b-2 border-gray-200 pb-2 mb-4 uppercase text-sm tracking-wider mt-auto">
+            <!-- Descripción del vendedor -->
+            <h4 class="font-bold text-gray-900 border-b-2 border-gray-200 pb-2 mb-3 uppercase text-xs tracking-wider">
               Descripción del Vendedor
             </h4>
-            <div class="text-sm md:text-base text-gray-800 whitespace-pre-wrap leading-relaxed bg-red-50/50 p-5 rounded-xl border border-red-100 italic">
+            <div class="text-sm text-gray-800 whitespace-pre-wrap leading-relaxed bg-red-50/50 p-4 rounded-xl border border-red-100 italic flex-grow mb-6">
               {carro.Content || 'Sin descripción adicional.'}
             </div>
-            
-            <div class="mt-8">
-              {telefono ? (
-                <a
-                  href={urlWhatsapp}
-                  target="_blank"
-                  class="bg-green-600 hover:bg-green-700 text-white font-bold py-4 px-6 rounded-xl transition-all flex items-center justify-center gap-3 shadow-lg hover:shadow-xl transform hover:-translate-y-1 w-full text-lg"
-                >
-                  <i data-lucide="message-circle" class="w-6 h-6"></i> Contactar Vendedor
-                </a>
-              ) : (
-                <div class="bg-gray-200 text-center py-4 px-6 rounded-xl text-gray-500 font-bold">
-                  No hay número de contacto
-                </div>
-              )}
-            </div>
 
+            <!-- Botón WhatsApp — SIEMPRE visible -->
+            <a
+              href={urlWhatsapp}
+              target="_blank"
+              class="mt-auto bg-green-600 hover:bg-green-700 text-white font-bold py-4 px-6 rounded-xl transition-all flex items-center justify-center gap-3 shadow-lg hover:shadow-xl transform hover:-translate-y-1 w-full text-lg"
+            >
+              <i data-lucide="message-circle" class="w-6 h-6"></i>
+              Contactar Vendedor
+            </a>
           </div>
+
         </div>
       </div>
     </div>
   </div>
 
-  <script is:inline>
-    // Script cliente para cambiar foto principal al hacer clic en miniaturas
-    document.addEventListener("DOMContentLoaded", () => {
-      const imgPrincipal = document.getElementById("imagenPrincipalPage");
-      const botones = document.querySelectorAll(".miniatura-btn");
-      
-      botones.forEach(btn => {
-        btn.addEventListener("click", () => {
-          const urlMax = btn.getAttribute("data-urlMax");
-          if (urlMax && imgPrincipal) {
-            imgPrincipal.src = urlMax;
-          }
+  <script is:inline define:vars={{ idsDrive, totalImagenes }}>
+    if (totalImagenes > 1) {
+      let current = 0;
+      const track = document.getElementById('carouselTrack');
+      const dots  = document.querySelectorAll('.dot');
+      const counter = document.getElementById('currentImg');
+
+      function goTo(index) {
+        current = (index + totalImagenes) % totalImagenes;
+        track.style.transform = `translateX(-${current * 100}%)`;
+        if (counter) counter.textContent = current + 1;
+        dots.forEach((d, i) => {
+          d.classList.toggle('bg-white', i === current);
+          d.classList.toggle('bg-white/40', i !== current);
         });
+      }
+
+      document.getElementById('prevBtn')?.addEventListener('click', () => goTo(current - 1));
+      document.getElementById('nextBtn')?.addEventListener('click', () => goTo(current + 1));
+      dots.forEach((d, i) => d.addEventListener('click', () => goTo(i)));
+
+      // Swipe táctil
+      let touchX = 0;
+      track?.addEventListener('touchstart', e => { touchX = e.touches[0].clientX; }, { passive: true });
+      track?.addEventListener('touchend', e => {
+        const diff = touchX - e.changedTouches[0].clientX;
+        if (Math.abs(diff) > 50) goTo(diff > 0 ? current + 1 : current - 1);
       });
-    });
+
+      // Auto-avance cada 6 segundos
+      setInterval(() => goTo(current + 1), 6000);
+    }
   </script>
 </Layout>
-
-<style>
-  .custom-scrollbar::-webkit-scrollbar {
-    height: 8px;
-  }
-  .custom-scrollbar::-webkit-scrollbar-track {
-    background: #f1f1f1; 
-    border-radius: 4px;
-  }
-  .custom-scrollbar::-webkit-scrollbar-thumb {
-    background: #cbd5e1; 
-    border-radius: 4px;
-  }
-  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-    background: #94a3b8; 
-  }
-</style>

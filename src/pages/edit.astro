@@ -5,8 +5,8 @@ import Navbar from '../components/Navbar.astro';
 
 <Layout title="Editar Vehículo">
   <script is:inline>
-    // Proteger ruta de admins
-    if (typeof localStorage !== 'undefined' && localStorage.getItem('isAdmin') !== 'true') {
+    // Validar si al menos está logueado para entrar a la página
+    if (typeof localStorage !== 'undefined' && localStorage.getItem('isLoggedIn') !== 'true') {
       window.location.href = '/';
     }
   </script>
@@ -159,6 +159,20 @@ import Navbar from '../components/Navbar.astro';
               return;
             }
 
+            // Validar propiedad del vehículo
+            const userEmail = typeof localStorage !== 'undefined' ? localStorage.getItem('userEmail') : null;
+            const isAdmin = typeof localStorage !== 'undefined' ? localStorage.getItem('isAdmin') === 'true' : false;
+            
+            if (!isAdmin && vehiculoAEditar.usuario !== userEmail) {
+               if(overlay) overlay.innerHTML = `<div class='text-red-700 font-bold p-6 bg-red-50 rounded-lg border border-red-200 mt-4 shadow-sm'>
+                  <i data-lucide="shield-alert" class="w-8 h-8 mx-auto mb-2 text-red-500"></i>
+                  Acceso Denegado: No tienes permisos para editar este vehículo porque no eres el autor de la publicación. Redirigiendo...
+               </div>`;
+               if(window.lucide) window.lucide.createIcons();
+               setTimeout(() => { window.location.href = '/'; }, 3500);
+               return;
+            }
+
             // Llenar modelos de Toyota automáticamente
             const modelosToyota = modelosPorMarca['Toyota'] || modelosPorMarca['TOYOTA'] ? Array.from(modelosPorMarca['Toyota'] || modelosPorMarca['TOYOTA']).sort() : [];
             llenarSelect('modelo', modelosToyota);
@@ -274,15 +288,30 @@ import Navbar from '../components/Navbar.astro';
               const canvas = document.createElement('canvas'); const ctx = canvas.getContext('2d');
               canvas.width = img.width; canvas.height = img.height; ctx.drawImage(img, 0, 0);
 
-              const text = "toyotausados.com";
-              const fontSize = Math.max(20, Math.floor(canvas.height / 30));
-              ctx.font = "bold " + fontSize + "px sans-serif"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
-              ctx.fillStyle = "rgba(255, 255, 255, 0.8)"; ctx.strokeStyle = "rgba(0, 0, 0, 0.5)";
-              ctx.lineWidth = Math.max(1, Math.floor(fontSize / 8));
-              const x = canvas.width / 2; const y = canvas.height - (fontSize * 1.5);
-              ctx.strokeText(text, x, y); ctx.fillText(text, x, y);
+              // Cargar Logo como Marca de Agua
+              const logo = new Image();
+              logo.crossOrigin = "anonymous";
+              logo.onload = () => {
+                const maxLogoWidth = canvas.width * 0.35; // 35% del ancho de la foto
+                const ratio = maxLogoWidth / logo.width;
+                const logoWidth = maxLogoWidth;
+                const logoHeight = logo.height * ratio;
 
-              resolve({ base64: canvas.toDataURL(file.type), nombre: file.name, mimeType: file.type });
+                // Posición: Centro inferior con margen
+                const x = (canvas.width / 2) - (logoWidth / 2);
+                const y = canvas.height - logoHeight - (canvas.height * 0.05);
+
+                ctx.globalAlpha = 0.8; 
+                ctx.drawImage(logo, x, y, logoWidth, logoHeight);
+                ctx.globalAlpha = 1.0;
+
+                resolve({ base64: canvas.toDataURL(file.type), nombre: file.name, mimeType: file.type });
+              };
+              logo.onerror = () => {
+                // Si falla el CORS o la imagen externa, se sube original
+                resolve({ base64: canvas.toDataURL(file.type), nombre: file.name, mimeType: file.type });
+              };
+              logo.src = "https://lh3.googleusercontent.com/d/11WeKEM19rGyJQtjtyTFRDK_Y26QeYBSy";
             };
             img.src = eventoReader.target.result;
           };

@@ -2,12 +2,14 @@
 import Layout from '../layouts/Layout.astro';
 import Navbar from '../components/Navbar.astro';
 import FiltrosSidebar from '../components/FiltrosSidebar.astro';
+import Hero from '../components/Hero.astro';
 ---
 
 <Layout title="Catálogo de Vehículos Toyota Usados">
   <Navbar />
+  <Hero />
 
-  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8" id="inventario">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4 pb-8" id="inventario">
     <div class="bg-white p-2 rounded-xl shadow-sm border border-gray-200 mb-8 flex">
       <div class="flex-1 relative flex items-center">
         <i data-lucide="search" class="absolute left-4 text-gray-400 w-5 h-5"></i>
@@ -102,27 +104,64 @@ import FiltrosSidebar from '../components/FiltrosSidebar.astro';
     }
 
     function llenarFiltros(datos) {
-      const anios = new Set();
-      const modelos = new Set();
+      const aniosPorModelo = {};
+      const modelosPorAnio = {};
+      const todosModelos = new Set();
+      const todosAnios = new Set();
+      const ciudades = new Set();
+
       datos.forEach(carro => {
-        if (carro.a_o) anios.add(carro.a_o);
+        const anio = carro.a_o ? carro.a_o.trim() : null;
+        let modelo = null;
         if (carro['Categorías']) {
           const partes = carro['Categorías'].split('>');
-          if (partes.length > 1) {
-            modelos.add(partes[1].trim());
-          }
+          if (partes.length > 1) modelo = partes[1].trim();
+        }
+        if (modelo) todosModelos.add(modelo);
+        if (anio) todosAnios.add(anio);
+        if (carro.ciudad_de_la_placa) ciudades.add(carro.ciudad_de_la_placa.trim());
+
+        if (modelo && anio) {
+          if (!aniosPorModelo[modelo]) aniosPorModelo[modelo] = new Set();
+          aniosPorModelo[modelo].add(anio);
+          if (!modelosPorAnio[anio]) modelosPorAnio[anio] = new Set();
+          modelosPorAnio[anio].add(modelo);
         }
       });
 
+      // Convertir Sets a Arrays para serialización
+      const aniosPorModeloArr = {};
+      Object.keys(aniosPorModelo).forEach(k => { aniosPorModeloArr[k] = [...aniosPorModelo[k]]; });
+      const modelosPorAnioArr = {};
+      Object.keys(modelosPorAnio).forEach(k => { modelosPorAnioArr[k] = [...modelosPorAnio[k]]; });
+
+      // Exponer datos de correlación globalmente
+      window.__filtroData = {
+        aniosPorModelo: aniosPorModeloArr,
+        modelosPorAnio: modelosPorAnioArr,
+        todosModelos: [...todosModelos],
+        todosAnios: [...todosAnios],
+      };
+
+      // Llenar Modelo
       const selectModelo = document.getElementById('filtroModelo');
-      Array.from(modelos).sort().forEach(modelo => {
+      [...todosModelos].sort().forEach(modelo => {
         selectModelo.insertAdjacentHTML('beforeend', `<option value="${modelo}">${modelo}</option>`);
       });
 
+      // Llenar Año
       const selectAnio = document.getElementById('filtroAnio');
-      Array.from(anios).sort((a, b) => b - a).forEach(anio => {
+      [...todosAnios].sort((a, b) => b - a).forEach(anio => {
         selectAnio.insertAdjacentHTML('beforeend', `<option value="${anio}">${anio}</option>`);
       });
+
+      // Llenar Ciudad
+      const selectCiudad = document.getElementById('filtroCiudad');
+      if (selectCiudad) {
+        [...ciudades].sort().forEach(c => {
+          selectCiudad.insertAdjacentHTML('beforeend', `<option value="${c}">${c}</option>`);
+        });
+      }
     }
 
     function cargarMasVehiculos() {
@@ -152,6 +191,18 @@ import FiltrosSidebar from '../components/FiltrosSidebar.astro';
             marca = carro['Categorías'].split('>')[0].trim();
           }
 
+          let botonEditarHTML = '';
+          const userEmail = typeof localStorage !== 'undefined' ? localStorage.getItem('userEmail') : null;
+          const isAdmin = typeof localStorage !== 'undefined' ? localStorage.getItem('isAdmin') === 'true' : false;
+          
+          if (isAdmin || (userEmail && carro.usuario === userEmail)) {
+             botonEditarHTML = `
+               <a href="/edit?id=${carro.ID}" class="px-3 bg-amber-100 hover:bg-amber-200 text-amber-800 rounded flex items-center justify-center transition" title="Editar Vehículo">
+                 <i data-lucide="pencil" class="w-4 h-4"></i>
+               </a>
+             `;
+          }
+
           const tarjeta = `
             <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-lg transition flex flex-col fade-in">
               <a href="/${carro.ID}/${slugify(carro.Title)}" class="relative aspect-[4/3] bg-gray-100 block group overflow-hidden">
@@ -173,10 +224,7 @@ import FiltrosSidebar from '../components/FiltrosSidebar.astro';
                 
                 <div class="mt-auto pt-4 border-t border-gray-100 flex gap-2">
                    <a href="/${carro.ID}/${slugify(carro.Title)}" class="flex-1 text-center bg-gray-100 hover:bg-gray-200 text-gray-800 font-semibold py-2 rounded transition text-sm flex items-center justify-center">Ver Detalles</a>
-                   
-                   <a href="/edit?id=${carro.ID}" class="px-3 bg-amber-100 hover:bg-amber-200 text-amber-800 rounded flex items-center justify-center transition admin-only-flex" title="Editar Vehículo">
-                     <i data-lucide="pencil" class="w-4 h-4"></i>
-                   </a>
+                   ${botonEditarHTML}
                 </div>
               </div>
             </div>
@@ -205,17 +253,27 @@ import FiltrosSidebar from '../components/FiltrosSidebar.astro';
       const texto = document.getElementById('buscador').value.toLowerCase();
       const modelo = document.getElementById('filtroModelo').value;
       const anio = document.getElementById('filtroAnio').value;
+      const precioMin = parseFloat(document.getElementById('filtroPrecioMin')?.value) || 0;
+      const precioMax = parseFloat(document.getElementById('filtroPrecioMax')?.value) || Infinity;
+      const kmMin = parseFloat(document.getElementById('filtroKmMin')?.value) || 0;
+      const kmMax = parseFloat(document.getElementById('filtroKmMax')?.value) || Infinity;
+      const transmision = document.getElementById('filtroTransmision')?.value || '';
+      const combustible = document.getElementById('filtroCombustible')?.value || '';
+      const ciudad = document.getElementById('filtroCiudad')?.value || '';
 
       inventarioFiltradoGlobal = inventarioGlobal.filter(carro => {
         const cumpleTexto = carro.Title.toLowerCase().includes(texto) || (carro['Categorías'] && carro['Categorías'].toLowerCase().includes(texto));
-        const cumpleAnio = anio === "" || carro.a_o === anio;
-        
+        const cumpleAnio = anio === '' || carro.a_o === anio;
         let cumpleModelo = true;
-        if (modelo !== "") {
-          cumpleModelo = carro['Categorías'] && carro['Categorías'].includes(">" + modelo);
-        }
-
-        return cumpleTexto && cumpleAnio && cumpleModelo;
+        if (modelo !== '') cumpleModelo = carro['Categorías'] && carro['Categorías'].includes('>' + modelo);
+        const precio = Number(carro.Price) || 0;
+        const cumplePrecio = precio >= precioMin && precio <= precioMax;
+        const km = Number(carro.Mileage) || 0;
+        const cumpleKm = km >= kmMin && km <= kmMax;
+        const cumpleTransmision = transmision === '' || (carro.Transmission || '').toLowerCase().includes(transmision.toLowerCase());
+        const cumbleCombustible = combustible === '' || (carro['Fuel '] || carro['Fuel'] || '').toLowerCase().includes(combustible.toLowerCase());
+        const cumpleCiudad = ciudad === '' || (carro.ciudad_de_la_placa || '').toLowerCase() === ciudad.toLowerCase();
+        return cumpleTexto && cumpleAnio && cumpleModelo && cumplePrecio && cumpleKm && cumpleTransmision && cumbleCombustible && cumpleCiudad;
       });
 
       inventarioFiltradoGlobal = [...inventarioFiltradoGlobal].reverse();
@@ -241,9 +299,11 @@ import FiltrosSidebar from '../components/FiltrosSidebar.astro';
     }
 
     function limpiarFiltros() {
-      document.getElementById('buscador').value = "";
-      document.getElementById('filtroAnio').value = "";
-      document.getElementById('filtroModelo').value = "";
+      document.getElementById('buscador').value = '';
+      document.getElementById('filtroAnio').value = '';
+      document.getElementById('filtroModelo').value = '';
+      const ids = ['filtroPrecioMin','filtroPrecioMax','filtroKmMin','filtroKmMax','filtroTransmision','filtroCombustible','filtroCiudad'];
+      ids.forEach(id => { const el = document.getElementById(id); if(el) el.value = ''; });
       aplicarFiltros();
     }
 

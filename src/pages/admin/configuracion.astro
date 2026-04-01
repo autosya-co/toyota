@@ -1,0 +1,157 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import Navbar from '../../components/Navbar.astro';
+---
+
+<Layout title="Configuración del Negocio">
+  <script is:inline>
+    if (typeof localStorage !== 'undefined' && localStorage.getItem('isAdmin') !== 'true') {
+      window.location.href = '/';
+    }
+  </script>
+  <Navbar />
+
+  <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+    <div class="mb-8">
+      <h1 class="text-3xl font-extrabold text-gray-900">Configuración del Negocio</h1>
+      <p class="text-gray-500 mt-1 text-sm">Personaliza la información de tu negocio</p>
+    </div>
+
+    <!-- Alerta guardado -->
+    <div id="alerta" class="hidden mb-6 p-4 rounded-xl text-center font-semibold text-sm"></div>
+
+    <form id="formConfig" class="space-y-8">
+
+      <!-- Información Básica -->
+      <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+        <h2 class="text-lg font-bold text-gray-800 mb-5 flex items-center gap-2">
+          <i data-lucide="store" class="w-5 h-5 text-red-600"></i>
+          Información Básica
+        </h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div class="md:col-span-2">
+            <label class="block text-xs font-bold text-gray-600 mb-1.5 uppercase tracking-wide">Nombre del Negocio</label>
+            <input type="text" id="cfg_nombre" placeholder="Ej: Toyota Usados Colombia"
+              class="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-red-500 focus:outline-none text-sm" />
+          </div>
+          <div class="md:col-span-2">
+            <label class="block text-xs font-bold text-gray-600 mb-1.5 uppercase tracking-wide">Eslogan</label>
+            <input type="text" id="cfg_eslogan" placeholder="Ej: Tu aliado en Toyota usados"
+              class="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-red-500 focus:outline-none text-sm" />
+          </div>
+          <div class="md:col-span-2">
+            <label class="block text-xs font-bold text-gray-600 mb-1.5 uppercase tracking-wide">Dirección</label>
+            <input type="text" id="cfg_direccion" placeholder="Ej: Calle 11A # 1E - 29 Caobos"
+              class="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-red-500 focus:outline-none text-sm" />
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-gray-600 mb-1.5 uppercase tracking-wide">Teléfono</label>
+            <input type="tel" id="cfg_telefono" placeholder="Ej: 3202832616"
+              class="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-red-500 focus:outline-none text-sm" />
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-gray-600 mb-1.5 uppercase tracking-wide">WhatsApp</label>
+            <input type="tel" id="cfg_whatsapp" placeholder="Ej: 573202832616"
+              class="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-red-500 focus:outline-none text-sm" />
+          </div>
+          <div class="md:col-span-2">
+            <label class="block text-xs font-bold text-gray-600 mb-1.5 uppercase tracking-wide">Email de Contacto</label>
+            <input type="email" id="cfg_email" placeholder="Ej: contacto@toyotausados.com"
+              class="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-red-500 focus:outline-none text-sm" />
+          </div>
+          <div class="md:col-span-2">
+            <label class="block text-xs font-bold text-gray-600 mb-1.5 uppercase tracking-wide">URL del Logo</label>
+            <input type="url" id="cfg_logo" placeholder="https://..."
+              class="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-red-500 focus:outline-none text-sm" />
+          </div>
+        </div>
+      </div>
+
+      <!-- Redes Sociales -->
+      <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+        <h2 class="text-lg font-bold text-gray-800 mb-5 flex items-center gap-2">
+          <i data-lucide="share-2" class="w-5 h-5 text-indigo-600"></i>
+          Redes Sociales
+        </h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-xs font-bold text-gray-600 mb-1.5 uppercase tracking-wide flex items-center gap-1">
+              <i data-lucide="facebook" class="w-3.5 h-3.5 text-blue-600"></i> Facebook
+            </label>
+            <input type="url" id="cfg_facebook" placeholder="https://facebook.com/..."
+              class="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none text-sm" />
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-gray-600 mb-1.5 uppercase tracking-wide flex items-center gap-1">
+              <i data-lucide="instagram" class="w-3.5 h-3.5 text-pink-600"></i> Instagram
+            </label>
+            <input type="url" id="cfg_instagram" placeholder="https://instagram.com/..."
+              class="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-pink-500 focus:outline-none text-sm" />
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-gray-600 mb-1.5 uppercase tracking-wide flex items-center gap-1">
+              <i data-lucide="youtube" class="w-3.5 h-3.5 text-red-600"></i> YouTube
+            </label>
+            <input type="url" id="cfg_youtube" placeholder="https://youtube.com/..."
+              class="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-red-500 focus:outline-none text-sm" />
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-gray-600 mb-1.5 uppercase tracking-wide">TikTok</label>
+            <input type="url" id="cfg_tiktok" placeholder="https://tiktok.com/..."
+              class="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-gray-500 focus:outline-none text-sm" />
+          </div>
+        </div>
+      </div>
+
+      <!-- Horario -->
+      <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+        <h2 class="text-lg font-bold text-gray-800 mb-5 flex items-center gap-2">
+          <i data-lucide="clock" class="w-5 h-5 text-green-600"></i>
+          Horario de Atención
+        </h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-xs font-bold text-gray-600 mb-1.5 uppercase tracking-wide">Días</label>
+            <input type="text" id="cfg_horario_dias" placeholder="Ej: Lunes a Sábado"
+              class="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 focus:outline-none text-sm" />
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-gray-600 mb-1.5 uppercase tracking-wide">Horas</label>
+            <input type="text" id="cfg_horario_horas" placeholder="Ej: 8:00am - 6:00pm"
+              class="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 focus:outline-none text-sm" />
+          </div>
+        </div>
+      </div>
+
+      <!-- Guardar -->
+      <button type="submit" class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-4 rounded-xl transition shadow-lg flex items-center justify-center gap-2 text-base cursor-pointer">
+        <i data-lucide="save" class="w-5 h-5"></i>
+        Guardar Configuración
+      </button>
+    </form>
+  </div>
+
+  <script is:inline>
+    const CAMPOS = ['nombre','eslogan','direccion','telefono','whatsapp','email','logo','facebook','instagram','youtube','tiktok','horario_dias','horario_horas'];
+
+    // Cargar datos guardados
+    CAMPOS.forEach(c => {
+      const el = document.getElementById('cfg_' + c);
+      if (el) el.value = localStorage.getItem('biz_' + c) || '';
+    });
+
+    document.getElementById('formConfig').addEventListener('submit', function(e) {
+      e.preventDefault();
+      CAMPOS.forEach(c => {
+        const el = document.getElementById('cfg_' + c);
+        if (el) localStorage.setItem('biz_' + c, el.value.trim());
+      });
+
+      const alerta = document.getElementById('alerta');
+      alerta.className = 'mb-6 p-4 rounded-xl text-center font-semibold text-sm bg-green-100 text-green-800';
+      alerta.textContent = '✓ Configuración guardada correctamente';
+      alerta.classList.remove('hidden');
+      setTimeout(() => alerta.classList.add('hidden'), 3000);
+    });
+  </script>
+</Layout>
