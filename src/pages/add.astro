@@ -151,7 +151,7 @@ import Navbar from '../components/Navbar.astro';
 
   <script is:inline>
     // =========================================================================
-    const URL_APPS_SCRIPT = "https://script.google.com/macros/s/AKfycbxRgsqZ82W3WiwQQtSHpPKGymaKnw3BQNEhY98csrcr6qoAxbX95i1aHPcckyI6yAvlTA/exec";
+    const URL_APPS_SCRIPT = "https://script.google.com/macros/s/AKfycbxU1ZSKUcuf1c2R1t0tifj69Bg2T-orSanduYSeF0DbLGYSPillsb_imQvioJ0datYxsQ/exec";
     const URL_CSV_GOOGLE_SHEET = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQUXSBa4HqBFoaoXLVQW8Pvh7BRTfIhc3K8fz9wqBZHrE3DM1oo-A5v-5vsB74osUxNYOD5zEFA60vF/pub?gid=1038341741&single=true&output=csv";
     // =========================================================================
 
@@ -286,13 +286,13 @@ import Navbar from '../components/Navbar.astro';
               let safeBase64 = "";
               try { safeBase64 = canvas.toDataURL(fileObj.file.type); } catch(e) {}
 
-              const maxLogoWidth = canvas.width * 0.35;
+              const maxLogoWidth = canvas.width * 0.50;
               const ratio = maxLogoWidth / logo.width;
               const logoWidth = maxLogoWidth;
               const logoHeight = logo.height * ratio;
 
               const x = (canvas.width / 2) - (logoWidth / 2);
-              const y = canvas.height - logoHeight - (canvas.height * 0.05);
+              const y = canvas.height - logoHeight - 3;
 
               try {
                 ctx.globalAlpha = 0.8;
@@ -310,7 +310,7 @@ import Navbar from '../components/Navbar.astro';
                  resolve({ nombre: fileObj.file.name, tipo: fileObj.file.type, base64: canvas.toDataURL(fileObj.file.type) });
               } catch(err){ resolve({ nombre: fileObj.file.name, tipo: fileObj.file.type, base64: "" }); }
             };
-            logo.src = "https://lh3.googleusercontent.com/d/11WeKEM19rGyJQtjtyTFRDK_Y26QeYBSy";
+            logo.src = "https://lh3.googleusercontent.com/d/1VYwozoc5di8noEwzE5QpkwpSJ0rgUXZq";
           };
           img.src = eventoReader.target.result;
         };

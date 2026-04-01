@@ -1,27 +1,24 @@
 ---
+export const prerender = false; // SSR: no pre-renderizar, generar en el servidor
+
 import Layout from '../../layouts/Layout.astro';
 import Navbar from '../../components/Navbar.astro';
 import Papa from 'papaparse';
 
-export async function getStaticPaths() {
-  const URL_CSV = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQUXSBa4HqBFoaoXLVQW8Pvh7BRTfIhc3K8fz9wqBZHrE3DM1oo-A5v-5vsB74osUxNYOD5zEFA60vF/pub?gid=1038341741&single=true&output=csv";
-  const response = await fetch(URL_CSV);
-  const csvText = await response.text();
-  const results = Papa.parse(csvText, { header: true });
-  const inventario = results.data.filter((c: any) => c.ID && c.Title);
+const URL_CSV = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQUXSBa4HqBFoaoXLVQW8Pvh7BRTfIhc3K8fz9wqBZHrE3DM1oo-A5v-5vsB74osUxNYOD5zEFA60vF/pub?gid=1038341741&single=true&output=csv";
 
-  const slugify = (text: string) =>
-    text.toString().toLowerCase().trim()
-      .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
-      .replace(/\s+/g, '-').replace(/[^\w\-]+/g, '').replace(/\-\-+/g, '-');
+const { id } = Astro.params;
 
-  return inventario.map((carro: any) => ({
-    params: { id: carro.ID.toString(), titulo: slugify(carro.Title) },
-    props: { carro },
-  }));
+// Fetch y parse del CSV en el servidor
+const response = await fetch(URL_CSV);
+const csvText = await response.text();
+const results = Papa.parse(csvText, { header: true });
+const carro: any = results.data.find((r: any) => String(r.ID).trim() === String(id).trim());
+
+// Si no se encuentra el vehículo → 404
+if (!carro) {
+  return Astro.redirect('/404');
 }
-
-const { carro } = Astro.props;
 
 const formatearDinero = (cantidad: any) =>
   new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }).format(Number(cantidad) || 0);
@@ -37,9 +34,18 @@ const mensaje = encodeURIComponent(`Hola, estoy interesado en el vehículo *${ca
 const urlWhatsapp = 'https://wa.me/573202832616?text=' + mensaje;
 const anio = carro.a_o || '-';
 const totalImagenes = idsDrive.length;
+const descripcionMeta = `${carro.Title} — ${anio}, ${formatearKm(carro.Mileage)}, ${carro.Transmission || ''} ${carro['Fuel'] || ''}. Precio: ${formatearDinero(carro.Price)}. Toyota Usados Colombia.`;
 ---
 
 <Layout title={`${carro.Title} | Toyota Usados`}>
+  <Fragment slot="head">
+    <meta name="description" content={descripcionMeta} />
+    <meta property="og:title" content={`${carro.Title} | Toyota Usados`} />
+    <meta property="og:description" content={descripcionMeta} />
+    {idsDrive[0] && <meta property="og:image" content={`https://drive.google.com/thumbnail?id=${idsDrive[0]}&sz=w1200`} />}
+    <meta property="og:type" content="product" />
+  </Fragment>
+
   <Navbar />
 
   <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-10">
@@ -58,37 +64,33 @@ const totalImagenes = idsDrive.length;
           <div>
             {totalImagenes > 0 ? (
               <div class="relative bg-black rounded-xl overflow-hidden" style="aspect-ratio: 4/3;">
-                <!-- Track -->
                 <div id="carouselTrack"
                   class="flex h-full transition-transform duration-500 ease-in-out"
                   style="width: 100%; height: 100%;">
-                  {idsDrive.map((id) => (
+                  {idsDrive.map((driveId, i) => (
                     <div class="flex-shrink-0 flex items-center justify-center bg-black"
                       style="min-width: 100%; height: 100%;">
                       <img
-                        src={`https://drive.google.com/thumbnail?id=${id}&sz=w1200`}
+                        src={`https://drive.google.com/thumbnail?id=${driveId}&sz=w1200`}
                         alt={carro.Title}
                         class="w-full h-full object-contain"
                         referrerpolicy="no-referrer"
-                        loading="eager"
+                        loading={i === 0 ? 'eager' : 'lazy'}
                       />
                     </div>
                   ))}
                 </div>
 
-                {/* Flechas (solo si hay más de 1 imagen) */}
                 {totalImagenes > 1 && (
                   <>
                     <button id="prevBtn" aria-label="Anterior"
-                      class="absolute left-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/80 text-white w-9 h-9 rounded-full flex items-center justify-center transition z-10 shadow">
-                      <i data-lucide="chevron-left" class="w-5 h-5"></i>
+                      class="absolute left-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/80 text-white w-9 h-9 rounded-full flex items-center justify-center transition z-10 shadow text-xl">
+                      &#8249;
                     </button>
                     <button id="nextBtn" aria-label="Siguiente"
-                      class="absolute right-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/80 text-white w-9 h-9 rounded-full flex items-center justify-center transition z-10 shadow">
-                      <i data-lucide="chevron-right" class="w-5 h-5"></i>
+                      class="absolute right-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/80 text-white w-9 h-9 rounded-full flex items-center justify-center transition z-10 shadow text-xl">
+                      &#8250;
                     </button>
-
-                    {/* Puntos */}
                     <div class="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5 z-10">
                       {idsDrive.map((_, i) => (
                         <button
@@ -100,54 +102,44 @@ const totalImagenes = idsDrive.length;
                   </>
                 )}
 
-                {/* Contador */}
                 <div class="absolute top-2 right-3 bg-black/50 text-white text-xs px-2.5 py-1 rounded-full z-10 backdrop-blur-sm">
                   <span id="currentImg">1</span> / {totalImagenes}
                 </div>
               </div>
             ) : (
               <div class="aspect-[4/3] bg-gray-100 rounded-xl flex items-center justify-center text-gray-400">
-                <i data-lucide="image-off" class="w-12 h-12"></i>
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-12 h-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                </svg>
               </div>
             )}
           </div>
 
           <!-- ─── Columna Derecha: Información ─── -->
           <div class="flex flex-col h-full">
-            <!-- Precio -->
             <div class="text-4xl font-extrabold text-red-700 mb-6">
               {formatearDinero(carro.Price)}
             </div>
 
-            <!-- Datos clave -->
             <div class="grid grid-cols-2 gap-3 mb-6">
               <div class="bg-gray-50 p-3 rounded-xl border border-gray-200 shadow-sm">
                 <span class="text-xs text-gray-500 font-bold uppercase block mb-1 tracking-wider">Año</span>
-                <span class="font-bold text-gray-800 flex items-center gap-1.5 text-base">
-                  <i data-lucide="calendar" class="w-4 h-4 text-red-600"></i> {anio}
-                </span>
+                <span class="font-bold text-gray-800 text-base">{anio}</span>
               </div>
               <div class="bg-gray-50 p-3 rounded-xl border border-gray-200 shadow-sm">
                 <span class="text-xs text-gray-500 font-bold uppercase block mb-1 tracking-wider">Kilometraje</span>
-                <span class="font-bold text-gray-800 flex items-center gap-1.5 text-base">
-                  <i data-lucide="gauge" class="w-4 h-4 text-red-600"></i> {formatearKm(carro.Mileage)}
-                </span>
+                <span class="font-bold text-gray-800 text-base">{formatearKm(carro.Mileage)}</span>
               </div>
               <div class="bg-gray-50 p-3 rounded-xl border border-gray-200 shadow-sm">
                 <span class="text-xs text-gray-500 font-bold uppercase block mb-1 tracking-wider">Transmisión</span>
-                <span class="font-bold text-gray-800 flex items-center gap-1.5 text-base">
-                  <i data-lucide="settings-2" class="w-4 h-4 text-red-600"></i> {carro.Transmission || '-'}
-                </span>
+                <span class="font-bold text-gray-800 text-base">{carro.Transmission || '-'}</span>
               </div>
               <div class="bg-gray-50 p-3 rounded-xl border border-gray-200 shadow-sm">
                 <span class="text-xs text-gray-500 font-bold uppercase block mb-1 tracking-wider">Combustible</span>
-                <span class="font-bold text-gray-800 flex items-center gap-1.5 text-base">
-                  <i data-lucide="fuel" class="w-4 h-4 text-red-600"></i> {carro['Fuel '] || carro['Fuel'] || '-'}
-                </span>
+                <span class="font-bold text-gray-800 text-base">{carro['Fuel '] || carro['Fuel'] || '-'}</span>
               </div>
             </div>
 
-            <!-- Más especificaciones -->
             <h4 class="font-bold text-gray-900 border-b-2 border-gray-200 pb-2 mb-3 uppercase text-xs tracking-wider">
               Más Especificaciones
             </h4>
@@ -180,7 +172,6 @@ const totalImagenes = idsDrive.length;
               </li>
             </ul>
 
-            <!-- Descripción del vendedor -->
             <h4 class="font-bold text-gray-900 border-b-2 border-gray-200 pb-2 mb-3 uppercase text-xs tracking-wider">
               Descripción del Vendedor
             </h4>
@@ -188,14 +179,11 @@ const totalImagenes = idsDrive.length;
               {carro.Content || 'Sin descripción adicional.'}
             </div>
 
-            <!-- Botón WhatsApp — SIEMPRE visible -->
             <a
               href={urlWhatsapp}
               target="_blank"
-              class="mt-auto bg-green-600 hover:bg-green-700 text-white font-bold py-4 px-6 rounded-xl transition-all flex items-center justify-center gap-3 shadow-lg hover:shadow-xl transform hover:-translate-y-1 w-full text-lg"
-            >
-              <i data-lucide="message-circle" class="w-6 h-6"></i>
-              Contactar Vendedor
+              class="mt-auto bg-green-600 hover:bg-green-700 text-white font-bold py-4 px-6 rounded-xl transition-all flex items-center justify-center gap-3 shadow-lg hover:shadow-xl transform hover:-translate-y-1 w-full text-lg">
+              💬 Contactar Vendedor
             </a>
           </div>
 
@@ -204,7 +192,7 @@ const totalImagenes = idsDrive.length;
     </div>
   </div>
 
-  <script is:inline define:vars={{ idsDrive, totalImagenes }}>
+  <script is:inline define:vars={{ totalImagenes }}>
     if (totalImagenes > 1) {
       let current = 0;
       const track = document.getElementById('carouselTrack');
@@ -225,7 +213,6 @@ const totalImagenes = idsDrive.length;
       document.getElementById('nextBtn')?.addEventListener('click', () => goTo(current + 1));
       dots.forEach((d, i) => d.addEventListener('click', () => goTo(i)));
 
-      // Swipe táctil
       let touchX = 0;
       track?.addEventListener('touchstart', e => { touchX = e.touches[0].clientX; }, { passive: true });
       track?.addEventListener('touchend', e => {
@@ -233,7 +220,6 @@ const totalImagenes = idsDrive.length;
         if (Math.abs(diff) > 50) goTo(diff > 0 ? current + 1 : current - 1);
       });
 
-      // Auto-avance cada 6 segundos
       setInterval(() => goTo(current + 1), 6000);
     }
   </script>
