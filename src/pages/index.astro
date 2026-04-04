@@ -109,8 +109,9 @@ try {
         document.getElementById('catalogoGrid').classList.remove('hidden');
         aplicarFiltros();
       } catch (err) {
-        console.error(err);
-        document.getElementById('loading').innerHTML = '<p class="text-red-500 font-bold">Error al procesar el inventario desde el servidor.</p>';
+        console.error("DEBUG - Error detallado:", err);
+        document.getElementById('loading').innerHTML = `<p class="text-red-500 font-bold">Error técnico: ${err.message}</p>
+          <p class="text-gray-500 text-xs mt-2">Consulta la consola (F12) para más detalles.</p>`;
       }
     }
 
