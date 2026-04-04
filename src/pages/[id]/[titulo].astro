@@ -145,11 +145,11 @@ const descripcionMeta = `${carro.Title} — ${anio}, ${formatearKm(carro.Mileage
               </div>
               <div class="bg-gray-50 p-3 rounded-xl border border-gray-200 shadow-sm">
                 <span class="text-xs text-gray-500 font-bold uppercase block mb-1 tracking-wider">Transmisión</span>
-                <span class="font-bold text-gray-800 text-base">{carro.Transmission || '-'}</span>
+                <span class="font-bold text-gray-800 text-base">{carro.Transmission || carro.transmision || '-'}</span>
               </div>
               <div class="bg-gray-50 p-3 rounded-xl border border-gray-200 shadow-sm">
                 <span class="text-xs text-gray-500 font-bold uppercase block mb-1 tracking-wider">Combustible</span>
-                <span class="font-bold text-gray-800 text-base">{carro['Fuel '] || carro['Fuel'] || '-'}</span>
+                <span class="font-bold text-gray-800 text-base">{carro.Fuel || carro.combustible || '-'}</span>
               </div>
             </div>
 

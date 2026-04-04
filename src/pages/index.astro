@@ -102,7 +102,8 @@ try {
           return;
         }
 
-        inventarioGlobal = results.filter(carro => carro.ID && carro.Title && carro['Categorías'] && carro['Categorías'].toLowerCase().includes('toyota'));
+        // Filtro: Asegurar que tenga ID y Título. Quitamos la restricción de "Toyota" para ver todo lo que hay en la hoja.
+        inventarioGlobal = results.filter(carro => carro.ID && carro.Title);
         llenarFiltros(inventarioGlobal);
         document.getElementById('loading').classList.add('hidden');
         document.getElementById('catalogoGrid').classList.remove('hidden');
