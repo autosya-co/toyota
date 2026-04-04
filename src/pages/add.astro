@@ -162,7 +162,7 @@ import Navbar from '../components/Navbar.astro';
 
     async function cargarDatosDinámicos() {
       try {
-        const snapshot = await getDocs(collection(db, "Toyota"));
+        const snapshot = await getDocs(collection(db, "toyotausados"));
         const marcas = new Set();
         const colores = new Set();
         const tipos = new Set();

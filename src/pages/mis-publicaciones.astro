@@ -68,9 +68,9 @@ import Navbar from '../components/Navbar.astro';
 
         let q;
         if (isAdmin) {
-            q = query(collection(db, "Toyota"));
+            q = query(collection(db, "toyotausados"));
         } else {
-            q = query(collection(db, "Toyota"), where("usuario", "==", userEmail));
+            q = query(collection(db, "toyotausados"), where("usuario", "==", userEmail));
         }
         
         const snapshot = await getDocs(q);

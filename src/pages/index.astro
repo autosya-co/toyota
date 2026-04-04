@@ -10,7 +10,7 @@ import { collection, getDocs } from 'firebase/firestore';
 
 let firebaseData: any[] = [];
 try {
-  const snapshot = await getDocs(collection(db, 'Toyota'));
+  const snapshot = await getDocs(collection(db, 'toyotausados'));
   firebaseData = snapshot.docs.map(doc => ({ firebaseId: doc.id, ...doc.data() }));
 } catch (e) {
   console.error("Error al cargar data de Firebase en SSR:", e);

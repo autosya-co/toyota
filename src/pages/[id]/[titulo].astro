@@ -12,12 +12,12 @@ let carro: any = null;
 try {
   let paramId = id;
   // Búsqueda del ID como String
-  let q = query(collection(db, "Toyota"), where("ID", "==", String(paramId).trim()));
+  let q = query(collection(db, "toyotausados"), where("ID", "==", String(paramId).trim()));
   let snapshot = await getDocs(q);
   
   // Respaldo en caso de que esté guardado como Número
   if (snapshot.empty && !isNaN(Number(paramId))) {
-    q = query(collection(db, "Toyota"), where("ID", "==", Number(paramId)));
+    q = query(collection(db, "toyotausados"), where("ID", "==", Number(paramId)));
     snapshot = await getDocs(q);
   }
   
