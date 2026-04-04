@@ -108,6 +108,7 @@ import Navbar from '../components/Navbar.astro';
     import { collection, query, where, getDocs } from 'firebase/firestore';
 
     const URL_APPS_SCRIPT = "https://script.google.com/macros/s/AKfycbyYzJOLHusIyOR5ZCp0SXZ2qLxuQmBXELBBqcZTFH3GETB0PUTpLN9o98BIEoMFNAJL/exec";
+    const URL_CSV_GOOGLE = "https://docs.google.com/spreadsheets/d/1he-DYM4lLfZqKxfzz8mMsEkrGOYiY0ZQqEHkH7W0In0/gviz/tq?tqx=out:csv&gid=1038341741";
 
     let modelosPorMarca = {};
     let archivosAlmacenados = [];
@@ -127,31 +128,46 @@ import Navbar from '../components/Navbar.astro';
 
       async function cargarEInicializar(id, overlay) {
         try {
-            const snapshot = await getDocs(collection(db, "toyotausados"));
-            const marcas = new Set();
+            // 1. Cargar Opciones desde CSV
+            const resCSV = await fetch(URL_CSV_GOOGLE);
+            const csvData = await resCSV.text();
+            const filas = csvData.split('\n').map(fila => fila.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(campo => campo.replace(/^"|"$/g, '')));
+            const headers = filas[0];
+
+            const idxMarca = headers.findIndex(h => h.toLowerCase().includes('categor'));
+            const idxColor = headers.findIndex(h => h.toLowerCase().includes('color'));
+            const idxTipo  = headers.findIndex(h => h.toLowerCase().includes('tipo'));
+
             const colores = new Set();
-            const tipos = new Set();
+            const tipos   = new Set();
+
+            filas.slice(1).forEach(fila => {
+              if (idxMarca !== -1 && fila[idxMarca]) {
+                const partes = fila[idxMarca].split('>');
+                if (partes.length > 0) {
+                  const marca = partes[0].trim();
+                  if (partes.length > 1) {
+                    const modelo = partes[1].trim();
+                    if (!modelosPorMarca[marca]) modelosPorMarca[marca] = new Set();
+                    modelosPorMarca[marca].add(modelo);
+                  }
+                }
+              }
+              if (idxColor !== -1 && fila[idxColor]) colores.add(fila[idxColor].trim());
+              if (idxTipo !== -1 && fila[idxTipo]) tipos.add(fila[idxTipo].trim());
+            });
+
+            const modelosToyota = modelosPorMarca['Toyota'] || modelosPorMarca['TOYOTA'] ? Array.from(modelosPorMarca['Toyota'] || modelosPorMarca['TOYOTA']).sort() : [];
+            llenarSelect('modelo', modelosToyota);
+            llenarSelect('color', Array.from(colores).sort());
+            llenarSelect('tipo', Array.from(tipos).sort());
+
+            // 2. Cargar Datos del Vehículo desde Firestore
+            const snapshot = await getDocs(collection(db, "toyotausados"));
             let vehiculoAEditar = null;
 
             snapshot.docs.forEach(docSnap => {
               const item = docSnap.data();
-              const categorias = item['Categorías'] || item['Categorias'] || "";
-              if (categorias) {
-                const partes = categorias.split('>');
-                if (partes.length > 0) {
-                  const marca = partes[0].trim();
-                  marcas.add(marca);
-                  if (partes.length > 1) {
-                    if (!modelosPorMarca[marca]) modelosPorMarca[marca] = new Set();
-                    modelosPorMarca[marca].add(partes[1].trim());
-                  }
-                }
-              }
-              const colorVal = item['Color'] || item['color_'] || item['color'];
-              if (colorVal) colores.add(String(colorVal).trim());
-              const tipoVal = item['Tipo'] || item['tipo'];
-              if (tipoVal) tipos.add(String(tipoVal).trim());
-
               if (String(item.ID).trim() === String(id).trim()) {
                 vehiculoAEditar = item;
               }
@@ -167,25 +183,15 @@ import Navbar from '../components/Navbar.astro';
             const isAdmin = typeof localStorage !== 'undefined' ? localStorage.getItem('isAdmin') === 'true' : false;
             
             if (!isAdmin && vehiculoAEditar.usuario !== userEmail) {
-               if(overlay) overlay.innerHTML = `<div class='text-red-700 font-bold p-6 bg-red-50 rounded-lg border border-red-200 mt-4 shadow-sm'>
-                  <i data-lucide="shield-alert" class="w-8 h-8 mx-auto mb-2 text-red-500"></i>
-                  Acceso Denegado: No tienes permisos para editar este vehículo porque no eres el autor de la publicación. Redirigiendo...
-               </div>`;
-               if(window.lucide) window.lucide.createIcons();
+               if(overlay) overlay.innerHTML = `<div class='text-red-700 font-bold p-6 bg-red-50 rounded-lg border border-red-200 mt-4 shadow-sm'>Acceso Denegado. Redirigiendo...</div>`;
                setTimeout(() => { window.location.href = '/'; }, 3500);
                return;
             }
 
-            // Llenar modelos de Toyota automáticamente
-            const modelosToyota = modelosPorMarca['Toyota'] || modelosPorMarca['TOYOTA'] ? Array.from(modelosPorMarca['Toyota'] || modelosPorMarca['TOYOTA']).sort() : [];
-            llenarSelect('modelo', modelosToyota);
-            llenarSelect('color', Array.from(colores).sort());
-            llenarSelect('tipo', Array.from(tipos).sort());
-
             preLlenarFormulario(vehiculoAEditar, overlay);
         } catch (error) {
-            console.error("Error cargando Firebase:", error);
-            if(overlay) overlay.innerHTML = `<p class='text-red-600 font-bold'>Error al conectar con la base de datos (Firestore).</p>`;
+            console.error("Error en inicialización:", error);
+            if(overlay) overlay.innerHTML = `<p class='text-red-600 font-bold'>Error al inicializar el formulario.</p>`;
         }
       }
 
