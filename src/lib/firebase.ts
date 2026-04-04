@@ -14,5 +14,6 @@ const firebaseConfig = {
 // Evitar re-inicialización en hot reload
 const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
 
-export const db = getFirestore(app);
+// Especificamos el ID de la base de datos 'default' (sin paréntesis) que es el que tienes creado
+export const db = getFirestore(app, 'default');
 export default app;
