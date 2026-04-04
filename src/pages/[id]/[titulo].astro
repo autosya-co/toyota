@@ -3,17 +3,30 @@ export const prerender = false; // SSR: no pre-renderizar, generar en el servido
 
 import Layout from '../../layouts/Layout.astro';
 import Navbar from '../../components/Navbar.astro';
-import Papa from 'papaparse';
-
-const URL_CSV = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQUXSBa4HqBFoaoXLVQW8Pvh7BRTfIhc3K8fz9wqBZHrE3DM1oo-A5v-5vsB74osUxNYOD5zEFA60vF/pub?gid=1038341741&single=true&output=csv";
+import { db } from '../../lib/firebase';
+import { collection, query, where, getDocs } from 'firebase/firestore';
 
 const { id } = Astro.params;
 
-// Fetch y parse del CSV en el servidor
-const response = await fetch(URL_CSV);
-const csvText = await response.text();
-const results = Papa.parse(csvText, { header: true });
-const carro: any = results.data.find((r: any) => String(r.ID).trim() === String(id).trim());
+let carro: any = null;
+try {
+  let paramId = id;
+  // Búsqueda del ID como String
+  let q = query(collection(db, "Toyota"), where("ID", "==", String(paramId).trim()));
+  let snapshot = await getDocs(q);
+  
+  // Respaldo en caso de que esté guardado como Número
+  if (snapshot.empty && !isNaN(Number(paramId))) {
+    q = query(collection(db, "Toyota"), where("ID", "==", Number(paramId)));
+    snapshot = await getDocs(q);
+  }
+  
+  if (!snapshot.empty) {
+    carro = snapshot.docs[0].data();
+  }
+} catch (e) {
+  console.error("Error obteniendo vehiculo desde Firebase:", e);
+}
 
 // Si no se encuentra el vehículo → 404
 if (!carro) {

@@ -1,4 +1,5 @@
 ---
+export const prerender = true;
 import Layout from '../layouts/Layout.astro';
 import Navbar from '../components/Navbar.astro';
 ---
@@ -149,50 +150,50 @@ import Navbar from '../components/Navbar.astro';
     </form>
   </div>
 
-  <script is:inline>
+  <script>
+    import { db } from '../lib/firebase';
+    import { collection, getDocs } from 'firebase/firestore';
+
     // =========================================================================
-    const URL_APPS_SCRIPT = "https://script.google.com/macros/s/AKfycbxU1ZSKUcuf1c2R1t0tifj69Bg2T-orSanduYSeF0DbLGYSPillsb_imQvioJ0datYxsQ/exec";
-    const URL_CSV_GOOGLE_SHEET = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQUXSBa4HqBFoaoXLVQW8Pvh7BRTfIhc3K8fz9wqBZHrE3DM1oo-A5v-5vsB74osUxNYOD5zEFA60vF/pub?gid=1038341741&single=true&output=csv";
+    const URL_APPS_SCRIPT = "https://script.google.com/macros/s/AKfycbwlxc0Bf4HTiQ_lUNQ1RE0EY4dk1eMsIka8MGPIflNtc6VqeMSrXBbRYtyOLEqP1n_vKQ/exec";
     // =========================================================================
 
     let modelosPorMarca = {};
 
     async function cargarDatosDinámicos() {
-      if (!URL_CSV_GOOGLE_SHEET || URL_CSV_GOOGLE_SHEET === "TU_URL_DEL_CSV_AQUI") return;
+      try {
+        const snapshot = await getDocs(collection(db, "Toyota"));
+        const marcas = new Set();
+        const colores = new Set();
+        const tipos = new Set();
 
-      window.Papa.parse(URL_CSV_GOOGLE_SHEET, {
-        download: true,
-        header: true,
-        complete: function (results) {
-          const marcas = new Set();
-          const colores = new Set();
-          const tipos = new Set();
+        snapshot.docs.forEach(docSnap => {
+          const item = docSnap.data();
+          if (item['Categorías']) {
+            const partes = item['Categorías'].split('>');
+            if (partes.length > 0) {
+              const marca = partes[0].trim();
+              marcas.add(marca);
 
-          results.data.forEach(item => {
-            if (item['Categorías']) {
-              const partes = item['Categorías'].split('>');
-              if (partes.length > 0) {
-                const marca = partes[0].trim();
-                marcas.add(marca);
-
-                if (partes.length > 1) {
-                  const modelo = partes[1].trim();
-                  if (!modelosPorMarca[marca]) modelosPorMarca[marca] = new Set();
-                  modelosPorMarca[marca].add(modelo);
-                }
+              if (partes.length > 1) {
+                const modelo = partes[1].trim();
+                if (!modelosPorMarca[marca]) modelosPorMarca[marca] = new Set();
+                modelosPorMarca[marca].add(modelo);
               }
             }
-            if (item['color_']) colores.add(item['color_'].trim());
-            if (item['tipo']) tipos.add(item['tipo'].trim());
-          });
+          }
+          if (item['color_']) colores.add(item['color_'].trim());
+          if (item['tipo']) tipos.add(item['tipo'].trim());
+        });
 
-          // Llenar modelos de Toyota automáticamente
-          const modelosToyota = modelosPorMarca['Toyota'] || modelosPorMarca['TOYOTA'] ? Array.from(modelosPorMarca['Toyota'] || modelosPorMarca['TOYOTA']).sort() : [];
-          llenarSelect('modelo', modelosToyota, 'Seleccione Modelo');
-          llenarSelect('color', Array.from(colores).sort(), 'Seleccione Color');
-          llenarSelect('tipo', Array.from(tipos).sort(), 'Seleccione Tipo');
-        }
-      });
+        // Llenar modelos de Toyota automáticamente
+        const modelosToyota = modelosPorMarca['Toyota'] || modelosPorMarca['TOYOTA'] ? Array.from(modelosPorMarca['Toyota'] || modelosPorMarca['TOYOTA']).sort() : [];
+        llenarSelect('modelo', modelosToyota, 'Seleccione Modelo');
+        llenarSelect('color', Array.from(colores).sort(), 'Seleccione Color');
+        llenarSelect('tipo', Array.from(tipos).sort(), 'Seleccione Tipo');
+      } catch (error) {
+        console.error("Error cargando firebase en form:", error);
+      }
     }
 
     function llenarSelect(id, array, textoDefault) {

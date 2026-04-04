@@ -1,8 +1,20 @@
 ---
+export const prerender = false;
 import Layout from '../layouts/Layout.astro';
 import Navbar from '../components/Navbar.astro';
 import FiltrosSidebar from '../components/FiltrosSidebar.astro';
 import Hero from '../components/Hero.astro';
+
+import { db } from '../lib/firebase';
+import { collection, getDocs } from 'firebase/firestore';
+
+let firebaseData: any[] = [];
+try {
+  const snapshot = await getDocs(collection(db, 'Toyota'));
+  firebaseData = snapshot.docs.map(doc => ({ firebaseId: doc.id, ...doc.data() }));
+} catch (e) {
+  console.error("Error al cargar data de Firebase en SSR:", e);
+}
 ---
 
 <Layout title="Catálogo de Vehículos Toyota Usados">
@@ -51,10 +63,10 @@ import Hero from '../components/Hero.astro';
 
   <FiltrosSidebar />
 
+  <!-- Datos pasados desde el servidor mediante JSON para no romper scope del script 'is:inline' -->
+  <script id="firebase-data" type="application/json" set:html={JSON.stringify(firebaseData)}></script>
+
   <script is:inline>
-    // =========================================================================
-    const URL_CSV_GOOGLE_SHEET = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQUXSBa4HqBFoaoXLVQW8Pvh7BRTfIhc3K8fz9wqBZHrE3DM1oo-A5v-5vsB74osUxNYOD5zEFA60vF/pub?gid=1038341741&single=true&output=csv";
-    // =========================================================================
 
     let inventarioGlobal = [];
     let inventarioFiltradoGlobal = [];
@@ -82,25 +94,23 @@ import Hero from '../components/Hero.astro';
     };
 
     function cargarCatalogo() {
-      if (!URL_CSV_GOOGLE_SHEET || URL_CSV_GOOGLE_SHEET === "TU_URL_DEL_CSV_AQUI") {
-        document.getElementById('loading').innerHTML = '<p class="text-red-500 font-bold">Falta configurar la URL del CSV en el código.</p>';
-        return;
-      }
-
-      Papa.parse(URL_CSV_GOOGLE_SHEET, {
-        download: true,
-        header: true,
-        complete: function (results) {
-          inventarioGlobal = results.data.filter(carro => carro.ID && carro.Title && carro['Categorías'] && carro['Categorías'].toLowerCase().includes('toyota'));
-          llenarFiltros(inventarioGlobal);
-          document.getElementById('loading').classList.add('hidden');
-          document.getElementById('catalogoGrid').classList.remove('hidden');
-          aplicarFiltros();
-        },
-        error: function (err) {
-          document.getElementById('loading').innerHTML = '<p class="text-red-500 font-bold">Error al cargar el inventario.</p>';
+      try {
+        const rawJsonStr = document.getElementById('firebase-data').textContent;
+        const results = rawJsonStr ? JSON.parse(rawJsonStr) : [];
+        if (!results || results.length === 0) {
+          document.getElementById('loading').innerHTML = '<p class="text-red-500 font-bold">No se encontraron datos en Firestore o hubo un error.</p>';
+          return;
         }
-      });
+
+        inventarioGlobal = results.filter(carro => carro.ID && carro.Title && carro['Categorías'] && carro['Categorías'].toLowerCase().includes('toyota'));
+        llenarFiltros(inventarioGlobal);
+        document.getElementById('loading').classList.add('hidden');
+        document.getElementById('catalogoGrid').classList.remove('hidden');
+        aplicarFiltros();
+      } catch (err) {
+        console.error(err);
+        document.getElementById('loading').innerHTML = '<p class="text-red-500 font-bold">Error al procesar el inventario desde el servidor.</p>';
+      }
     }
 
     function llenarFiltros(datos) {

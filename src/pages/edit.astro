@@ -1,4 +1,5 @@
 ---
+export const prerender = true;
 import Layout from '../layouts/Layout.astro';
 import Navbar from '../components/Navbar.astro';
 ---
@@ -102,11 +103,11 @@ import Navbar from '../components/Navbar.astro';
     </form>
   </div>
 
-  <script is:inline>
-    // =========================================================================
-    const URL_APPS_SCRIPT = "https://script.google.com/macros/s/AKfycbxU1ZSKUcuf1c2R1t0tifj69Bg2T-orSanduYSeF0DbLGYSPillsb_imQvioJ0datYxsQ/exec";
-    const URL_CSV_GOOGLE_SHEET = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQUXSBa4HqBFoaoXLVQW8Pvh7BRTfIhc3K8fz9wqBZHrE3DM1oo-A5v-5vsB74osUxNYOD5zEFA60vF/pub?gid=1038341741&single=true&output=csv";
-    // =========================================================================
+  <script>
+    import { db } from '../lib/firebase';
+    import { collection, query, where, getDocs } from 'firebase/firestore';
+
+    const URL_APPS_SCRIPT = "https://script.google.com/macros/s/AKfycbwlxc0Bf4HTiQ_lUNQ1RE0EY4dk1eMsIka8MGPIflNtc6VqeMSrXBbRYtyOLEqP1n_vKQ/exec";
 
     let modelosPorMarca = {};
     let archivosAlmacenados = [];
@@ -124,17 +125,16 @@ import Navbar from '../components/Navbar.astro';
         cargarEInicializar(idVehiculo, loadingOverlay);
       }
 
-      function cargarEInicializar(id, overlay) {
-        window.Papa.parse(URL_CSV_GOOGLE_SHEET, {
-          download: true,
-          header: true,
-          complete: function (results) {
+      async function cargarEInicializar(id, overlay) {
+        try {
+            const snapshot = await getDocs(collection(db, "Toyota"));
             const marcas = new Set();
             const colores = new Set();
             const tipos = new Set();
             let vehiculoAEditar = null;
 
-            results.data.forEach(item => {
+            snapshot.docs.forEach(docSnap => {
+              const item = docSnap.data();
               if (item['Categorías']) {
                 const partes = item['Categorías'].split('>');
                 if (partes.length > 0) {
@@ -149,7 +149,7 @@ import Navbar from '../components/Navbar.astro';
               if (item['color_']) colores.add(item['color_'].trim());
               if (item['tipo']) tipos.add(item['tipo'].trim());
 
-              if (item.ID === id) {
+              if (String(item.ID).trim() === String(id).trim()) {
                 vehiculoAEditar = item;
               }
             });
@@ -180,8 +180,10 @@ import Navbar from '../components/Navbar.astro';
             llenarSelect('tipo', Array.from(tipos).sort());
 
             preLlenarFormulario(vehiculoAEditar, overlay);
-          }
-        });
+        } catch (error) {
+            console.error("Error cargando Firebase:", error);
+            if(overlay) overlay.innerHTML = `<p class='text-red-600 font-bold'>Error al conectar con la base de datos (Firestore).</p>`;
+        }
       }
 
       function llenarSelect(id, array) {

@@ -1,4 +1,5 @@
 ---
+export const prerender = true;
 import Layout from '../layouts/Layout.astro';
 import Navbar from '../components/Navbar.astro';
 ---
@@ -47,9 +48,11 @@ import Navbar from '../components/Navbar.astro';
     <div id="gridPublicaciones" class="hidden grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"></div>
   </div>
 
-  <script is:inline>
-    const URL_CSV = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQUXSBa4HqBFoaoXLVQW8Pvh7BRTfIhc3K8fz9wqBZHrE3DM1oo-A5v-5vsB74osUxNYOD5zEFA60vF/pub?gid=1038341741&single=true&output=csv";
-    const URL_APPS_SCRIPT = "https://script.google.com/macros/s/AKfycbxU1ZSKUcuf1c2R1t0tifj69Bg2T-orSanduYSeF0DbLGYSPillsb_imQvioJ0datYxsQ/exec";
+  <script>
+    import { db } from '../lib/firebase';
+    import { collection, query, where, getDocs } from 'firebase/firestore';
+
+    const URL_APPS_SCRIPT = "https://script.google.com/macros/s/AKfycbwlxc0Bf4HTiQ_lUNQ1RE0EY4dk1eMsIka8MGPIflNtc6VqeMSrXBbRYtyOLEqP1n_vKQ/exec";
 
     const userEmail = localStorage.getItem('userEmail') || '';
     const isAdmin   = localStorage.getItem('isAdmin') === 'true';
@@ -57,18 +60,25 @@ import Navbar from '../components/Navbar.astro';
     const fmt = (v) => new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }).format(v || 0);
     const slugify = (t) => t ? t.toString().toLowerCase().trim().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/\s+/g,'-').replace(/[^\w\-]+/g,'').replace(/\-\-+/g,'-') : 'auto';
 
-    Papa.parse(URL_CSV, {
-      download: true,
-      header: true,
-      complete(results) {
+    async function cargarPublicaciones() {
+      try {
         const loading      = document.getElementById('loading');
         const estadoVacio  = document.getElementById('estadoVacio');
         const grid         = document.getElementById('gridPublicaciones');
 
-        // Filtrar IDs eliminados localmente (caché de Google puede tardar en actualizarse)
+        let q;
+        if (isAdmin) {
+            q = query(collection(db, "Toyota"));
+        } else {
+            q = query(collection(db, "Toyota"), where("usuario", "==", userEmail));
+        }
+        
+        const snapshot = await getDocs(q);
+        const results = snapshot.docs.map(doc => doc.data());
+
+        // Filtrar IDs eliminados localmente
         const deletedIds = JSON.parse(localStorage.getItem('deletedVehicleIds') || '[]');
-        let lista = results.data.filter(c => c.ID && c.Title && !deletedIds.includes(String(c.ID)));
-        if (!isAdmin) lista = lista.filter(c => c.usuario === userEmail);
+        let lista = results.filter(c => c.ID && c.Title && !deletedIds.includes(String(c.ID)));
         lista = lista.reverse();
 
         loading.classList.add('hidden');
@@ -150,11 +160,12 @@ import Navbar from '../components/Navbar.astro';
         });
 
         if (window.lucide) window.lucide.createIcons();
-      },
-      error() {
-        document.getElementById('loading').innerHTML = '<p class="text-red-500 font-bold text-center py-20">Error al cargar publicaciones</p>';
+      } catch (error) {
+        document.getElementById('loading').innerHTML = '<p class="text-red-500 font-bold text-center py-20">Error al cargar publicaciones desde Firebase</p>';
       }
-    });
+    }
+    
+    cargarPublicaciones();
 
     // Event delegation: un solo listener para TODOS los botones "Borrar"
     document.getElementById('gridPublicaciones').addEventListener('click', function(e) {
