@@ -128,39 +128,15 @@ import Navbar from '../components/Navbar.astro';
 
       async function cargarEInicializar(id, overlay) {
         try {
-            // 1. Cargar Opciones desde CSV
-            const resCSV = await fetch(URL_CSV_GOOGLE);
-            const csvData = await resCSV.text();
-            const filas = csvData.split('\n').map(fila => fila.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(campo => campo.replace(/^"|"$/g, '')));
-            const headers = filas[0];
+            // 1. Cargar Opciones desde Apps Script (doGet)
+            const respuesta = await fetch(URL_APPS_SCRIPT);
+            const data = await respuesta.json();
+            
+            if (data.error) throw new Error(data.error);
 
-            const idxMarca = headers.findIndex(h => h.toLowerCase().includes('categor'));
-            const idxColor = headers.findIndex(h => h.toLowerCase().includes('color'));
-            const idxTipo  = headers.findIndex(h => h.toLowerCase().includes('tipo'));
-
-            const colores = new Set();
-            const tipos   = new Set();
-
-            filas.slice(1).forEach(fila => {
-              if (idxMarca !== -1 && fila[idxMarca]) {
-                const partes = fila[idxMarca].split('>');
-                if (partes.length > 0) {
-                  const marca = partes[0].trim();
-                  if (partes.length > 1) {
-                    const modelo = partes[1].trim();
-                    if (!modelosPorMarca[marca]) modelosPorMarca[marca] = new Set();
-                    modelosPorMarca[marca].add(modelo);
-                  }
-                }
-              }
-              if (idxColor !== -1 && fila[idxColor]) colores.add(fila[idxColor].trim());
-              if (idxTipo !== -1 && fila[idxTipo]) tipos.add(fila[idxTipo].trim());
-            });
-
-            const modelosToyota = modelosPorMarca['Toyota'] || modelosPorMarca['TOYOTA'] ? Array.from(modelosPorMarca['Toyota'] || modelosPorMarca['TOYOTA']).sort() : [];
-            llenarSelect('modelo', modelosToyota);
-            llenarSelect('color', Array.from(colores).sort());
-            llenarSelect('tipo', Array.from(tipos).sort());
+            llenarSelect('modelo', data.modelos || []);
+            llenarSelect('color', data.colores || []);
+            llenarSelect('tipo', data.tipos || []);
 
             // 2. Cargar Datos del Vehículo desde Firestore
             const snapshot = await getDocs(collection(db, "toyotausados"));
@@ -191,7 +167,7 @@ import Navbar from '../components/Navbar.astro';
             preLlenarFormulario(vehiculoAEditar, overlay);
         } catch (error) {
             console.error("Error en inicialización:", error);
-            if(overlay) overlay.innerHTML = `<p class='text-red-600 font-bold'>Error al inicializar el formulario.</p>`;
+            if(overlay) overlay.innerHTML = `<p class='text-red-600 font-bold'>Error al iniciar el formulario (Apps Script/Firestore).</p>`;
         }
       }
 
