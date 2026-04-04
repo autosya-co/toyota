@@ -107,7 +107,7 @@ import Navbar from '../components/Navbar.astro';
     import { db } from '../lib/firebase';
     import { collection, query, where, getDocs } from 'firebase/firestore';
 
-    const URL_APPS_SCRIPT = "https://script.google.com/macros/s/AKfycbwlxc0Bf4HTiQ_lUNQ1RE0EY4dk1eMsIka8MGPIflNtc6VqeMSrXBbRYtyOLEqP1n_vKQ/exec";
+    const URL_APPS_SCRIPT = "https://script.google.com/macros/s/AKfycbyYzJOLHusIyOR5ZCp0SXZ2qLxuQmBXELBBqcZTFH3GETB0PUTpLN9o98BIEoMFNAJL/exec";
 
     let modelosPorMarca = {};
     let archivosAlmacenados = [];
@@ -135,8 +135,9 @@ import Navbar from '../components/Navbar.astro';
 
             snapshot.docs.forEach(docSnap => {
               const item = docSnap.data();
-              if (item['Categorías']) {
-                const partes = item['Categorías'].split('>');
+              const categorias = item['Categorías'] || item['Categorias'] || "";
+              if (categorias) {
+                const partes = categorias.split('>');
                 if (partes.length > 0) {
                   const marca = partes[0].trim();
                   marcas.add(marca);
@@ -146,8 +147,10 @@ import Navbar from '../components/Navbar.astro';
                   }
                 }
               }
-              if (item['color_']) colores.add(item['color_'].trim());
-              if (item['tipo']) tipos.add(item['tipo'].trim());
+              const colorVal = item['Color'] || item['color_'] || item['color'];
+              if (colorVal) colores.add(String(colorVal).trim());
+              const tipoVal = item['Tipo'] || item['tipo'];
+              if (tipoVal) tipos.add(String(tipoVal).trim());
 
               if (String(item.ID).trim() === String(id).trim()) {
                 vehiculoAEditar = item;
@@ -208,8 +211,8 @@ import Navbar from '../components/Navbar.astro';
         document.getElementById('contenido').value = vehiculo.Content;
 
         setTimeout(() => {
-          document.getElementById('color').value = vehiculo.color_;
-          document.getElementById('tipo').value = vehiculo.tipo;
+          document.getElementById('color').value = vehiculo.Color || vehiculo.color_ || "";
+          document.getElementById('tipo').value = vehiculo.Tipo || vehiculo.tipo || "";
         }, 100);
 
         if (vehiculo['Categorías']) {
