@@ -160,40 +160,66 @@ import Navbar from '../components/Navbar.astro';
 
     async function cargarDatosDinámicos() {
       try {
+        console.log("Iniciando carga de campos desde CSV...");
         const respuesta = await fetch(URL_CSV_PUBLISHED);
-        const csv = await respuesta.text();
-        const filas = csv.split('\n').map(fila => fila.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(campo => campo.replace(/^"|"$/g, '')));
-        const headers = filas[0];
+        let csv = await respuesta.text();
+        
+        // Limpiar caracteres invisibles y normalizar saltos de línea
+        csv = csv.replace(/\r/g, "");
+        const filasRaw = csv.split('\n').filter(f => f.trim() !== "");
+        
+        // Procesar filas (maneja comas dentro de comillas)
+        const filas = filasRaw.map(fila => {
+          return fila.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(campo => campo.replace(/^"|"$/g, '').trim());
+        });
 
-        const idxMarca = headers.findIndex(h => h.toLowerCase().includes('categor'));
+        const headers = filas[0];
+        console.log("Encabezados detectados:", headers);
+
+        const idxMarca = headers.findIndex(h => h.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").includes('categor'));
         const idxColor = headers.findIndex(h => h.toLowerCase().includes('color'));
         const idxTipo  = headers.findIndex(h => h.toLowerCase().includes('tipo'));
 
+        console.log("Índices encontrados:", { idxMarca, idxColor, idxTipo });
+
         const colores = new Set();
         const tipos   = new Set();
+        modelosPorMarca = {};
 
         filas.slice(1).forEach(fila => {
+          // Procesar Categorías (Marca > Modelo)
           if (idxMarca !== -1 && fila[idxMarca]) {
             const partes = fila[idxMarca].split('>');
-            if (partes.length > 0) {
+            if (partes.length >= 1) {
               const marca = partes[0].trim();
-              if (partes.length > 1) {
-                const modelo = partes[1].trim();
-                if (!modelosPorMarca[marca]) modelosPorMarca[marca] = new Set();
-                modelosPorMarca[marca].add(modelo);
-              }
+              const modelo = partes[1] ? partes[1].trim() : null;
+              
+              if (!modelosPorMarca[marca]) modelosPorMarca[marca] = new Set();
+              if (modelo) modelosPorMarca[marca].add(modelo);
             }
           }
-          if (idxColor !== -1 && fila[idxColor]) colores.add(fila[idxColor].trim());
-          if (idxTipo !== -1 && fila[idxTipo]) tipos.add(fila[idxTipo].trim());
+          // Procesar Colores
+          if (idxColor !== -1 && fila[idxColor]) {
+             const val = fila[idxColor].trim();
+             if (val && val !== "-1") colores.add(val);
+          }
+          // Procesar Tipos
+          if (idxTipo !== -1 && fila[idxTipo]) {
+             const val = fila[idxTipo].trim();
+             if (val && val !== "-1") tipos.add(val);
+          }
         });
 
-        const modelosToyota = modelosPorMarca['Toyota'] || modelosPorMarca['TOYOTA'] ? Array.from(modelosPorMarca['Toyota'] || modelosPorMarca['TOYOTA']).sort() : [];
+        const modelosToyota = Array.from(modelosPorMarca['Toyota'] || modelosPorMarca['TOYOTA'] || []).sort();
+        console.log("Modelos Toyota encontrados:", modelosToyota.length);
+
         llenarSelect('modelo', modelosToyota, 'Seleccione Modelo');
         llenarSelect('color', Array.from(colores).sort(), 'Seleccione Color');
         llenarSelect('tipo', Array.from(tipos).sort(), 'Seleccione Tipo');
+        
+        console.log("Campos poblados con éxito.");
       } catch (error) {
-        console.error("Error cargando CSV:", error);
+        console.error("Error crítico cargando CSV:", error);
       }
     }
 
