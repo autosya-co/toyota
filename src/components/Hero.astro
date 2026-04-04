@@ -3,25 +3,39 @@
 // Aquí puedes agregar props si en el futuro deseas que los textos o enlaces sean dinámicos.
 ---
 
+<!-- Importar fuente Montserrat de Google Fonts (Astro moverá esto automáticamente al <head>) -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,800;0,900&display=swap" rel="stylesheet">
+
 <!-- Contenedor Principal -->
-<div class="flex flex-col items-center justify-center w-full" style="margin-top: 16px; margin-bottom: 0;">
+<div class="flex flex-col items-center justify-center w-full px-4 md:px-0" style="margin-top: 16px; margin-bottom: 0;">
     
-    <!-- SECCIÓN 1: Fila de Botones Romboidales -->
-    <div class="flex flex-col md:flex-row gap-[5px] items-center justify-center">
+    <!-- SECCIÓN 1: Fila de Botones Romboidales (Ahora son 3) -->
+    <div class="flex flex-col md:flex-row gap-[5px] items-center justify-center w-full max-w-5xl">
         
-        <!-- CONTENEDOR ANIMADO 1 (Entra por la izquierda) -->
-        <div class="opacity-0 animate-slide-left">
-            <button class="group bg-black text-white px-6 md:px-8 py-[5px] transform -skew-x-12 shadow-md shadow-gray-400 hover:bg-gray-800 hover:shadow-lg hover:shadow-gray-500 hover:-translate-y-[2px] transition-all duration-300 ease-in-out cursor-pointer focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-opacity-50">
-                <span class="inline-block transform skew-x-12 font-bold uppercase tracking-widest text-xs sm:text-sm md:text-base whitespace-nowrap">
-                    Compra - Venta - Consignación
+        <!-- NUEVO BOTÓN 1: Fondo Amarillo -->
+        <div class="opacity-0 animate-slide-left w-full md:w-auto">
+            <button class="group w-full bg-[#FFCC00] text-black px-4 md:px-6 py-[5px] transform -skew-x-12 shadow-md shadow-yellow-500/40 hover:bg-[#E6B800] hover:shadow-lg hover:shadow-yellow-600/50 hover:-translate-y-[2px] transition-all duration-300 ease-in-out cursor-pointer focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:ring-opacity-50 flex justify-center">
+                <span class="inline-block transform skew-x-12 font-['Montserrat'] font-black uppercase tracking-widest text-[11px] sm:text-sm md:text-base whitespace-nowrap">
+                    Compramos tu auto
                 </span>
             </button>
         </div>
 
-        <!-- CONTENEDOR ANIMADO 2 (Entra por la derecha) -->
-        <div class="opacity-0 animate-slide-right" style="animation-delay: 0.2s;">
-            <button class="group bg-[#FF0000] text-white px-6 md:px-8 py-[5px] transform -skew-x-12 shadow-md shadow-[#FF0000]/50 hover:bg-[#CC0000] hover:shadow-lg hover:shadow-[#FF0000]/50 hover:-translate-y-[2px] transition-all duration-300 ease-in-out cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#FF0000] focus:ring-opacity-50">
-                <span class="inline-block transform skew-x-12 font-bold uppercase tracking-widest text-xs sm:text-sm md:text-base whitespace-nowrap">
+        <!-- BOTÓN 2: Fondo Negro (Texto actualizado) -->
+        <div class="opacity-0 animate-slide-left w-full md:w-auto" style="animation-delay: 0.2s;">
+            <button class="group w-full bg-black text-white px-4 md:px-6 py-[5px] transform -skew-x-12 shadow-md shadow-gray-400 hover:bg-gray-800 hover:shadow-lg hover:shadow-gray-500 hover:-translate-y-[2px] transition-all duration-300 ease-in-out cursor-pointer focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-opacity-50 flex justify-center">
+                <span class="inline-block transform skew-x-12 font-['Montserrat'] font-black uppercase tracking-widest text-[11px] sm:text-sm md:text-base whitespace-nowrap">
+                    Venta - Consignación
+                </span>
+            </button>
+        </div>
+
+        <!-- BOTÓN 3: Fondo Rojo -->
+        <div class="opacity-0 animate-slide-right w-full md:w-auto" style="animation-delay: 0.4s;">
+            <button class="group w-full bg-[#FF0000] text-white px-4 md:px-6 py-[5px] transform -skew-x-12 shadow-md shadow-[#FF0000]/50 hover:bg-[#CC0000] hover:shadow-lg hover:shadow-[#FF0000]/50 hover:-translate-y-[2px] transition-all duration-300 ease-in-out cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#FF0000] focus:ring-opacity-50 flex justify-center">
+                <span class="inline-block transform skew-x-12 font-['Montserrat'] font-black uppercase tracking-widest text-[11px] sm:text-sm md:text-base whitespace-nowrap">
                     Permuta - Financiación
                 </span>
             </button>
@@ -29,12 +43,12 @@
 
     </div>
 
-    <!-- CONTENEDOR ANIMADO 3 (Entra por abajo) -->
+    <!-- CONTENEDOR ANIMADO 3: Enlace "Publica Gratis" -->
     <!-- Solo visible en móviles (md:hidden) -->
-    <div class="opacity-0 animate-slide-up mt-[10px] md:hidden" style="animation-delay: 0.4s;">
-        <button class="bg-[#FF0000] text-white font-bold text-sm py-[5px] px-[10px] rounded-md shadow-md shadow-gray-300 hover:bg-[#CC0000] hover:shadow-lg hover:-translate-y-[1px] transition-all duration-300 cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#FF0000] focus:ring-opacity-50">
+    <div class="opacity-0 animate-slide-up mt-[10px] md:hidden text-center w-full" style="animation-delay: 0.6s;">
+        <a href="/add" class="inline-block bg-[#FF0000] text-white font-['Montserrat'] font-black text-sm py-[5px] px-[20px] rounded-md shadow-md shadow-gray-300 hover:bg-[#CC0000] hover:shadow-lg hover:-translate-y-[1px] transition-all duration-300 cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#FF0000] focus:ring-opacity-50">
             Publica Gratis
-        </button>
+        </a>
     </div>
 
 </div>
