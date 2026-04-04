@@ -155,24 +155,45 @@ import Navbar from '../components/Navbar.astro';
     import { collection, getDocs } from 'firebase/firestore';
 
     const URL_APPS_SCRIPT = "https://script.google.com/macros/s/AKfycbyYzJOLHusIyOR5ZCp0SXZ2qLxuQmBXELBBqcZTFH3GETB0PUTpLN9o98BIEoMFNAJL/exec";
-    const URL_CSV_GOOGLE = "https://docs.google.com/spreadsheets/d/1he-DYM4lLfZqKxfzz8mMsEkrGOYiY0ZQqEHkH7W0In0/gviz/tq?tqx=out:csv&gid=1038341741";
+    const URL_CSV_PUBLISHED = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQUXSBa4HqBFoaoXLVQW8Pvh7BRTfIhc3K8fz9wqBZHrE3DM1oo-A5v-5vsB74osUxNYOD5zEFA60vF/pub?gid=1038341741&single=true&output=csv";
     let modelosPorMarca = {};
 
     async function cargarDatosDinámicos() {
       try {
-        // Llamamos al doGet de tu Apps Script para obtener los datos procesados
-        const respuesta = await fetch(URL_APPS_SCRIPT);
-        const data = await respuesta.json();
+        const respuesta = await fetch(URL_CSV_PUBLISHED);
+        const csv = await respuesta.text();
+        const filas = csv.split('\n').map(fila => fila.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(campo => campo.replace(/^"|"$/g, '')));
+        const headers = filas[0];
 
-        if (data.error) throw new Error(data.error);
+        const idxMarca = headers.findIndex(h => h.toLowerCase().includes('categor'));
+        const idxColor = headers.findIndex(h => h.toLowerCase().includes('color'));
+        const idxTipo  = headers.findIndex(h => h.toLowerCase().includes('tipo'));
 
-        llenarSelect('modelo', data.modelos || [], 'Seleccione Modelo');
-        llenarSelect('color', data.colores || [], 'Seleccione Color');
-        llenarSelect('tipo', data.tipos || [], 'Seleccione Tipo');
+        const colores = new Set();
+        const tipos   = new Set();
+
+        filas.slice(1).forEach(fila => {
+          if (idxMarca !== -1 && fila[idxMarca]) {
+            const partes = fila[idxMarca].split('>');
+            if (partes.length > 0) {
+              const marca = partes[0].trim();
+              if (partes.length > 1) {
+                const modelo = partes[1].trim();
+                if (!modelosPorMarca[marca]) modelosPorMarca[marca] = new Set();
+                modelosPorMarca[marca].add(modelo);
+              }
+            }
+          }
+          if (idxColor !== -1 && fila[idxColor]) colores.add(fila[idxColor].trim());
+          if (idxTipo !== -1 && fila[idxTipo]) tipos.add(fila[idxTipo].trim());
+        });
+
+        const modelosToyota = modelosPorMarca['Toyota'] || modelosPorMarca['TOYOTA'] ? Array.from(modelosPorMarca['Toyota'] || modelosPorMarca['TOYOTA']).sort() : [];
+        llenarSelect('modelo', modelosToyota, 'Seleccione Modelo');
+        llenarSelect('color', Array.from(colores).sort(), 'Seleccione Color');
+        llenarSelect('tipo', Array.from(tipos).sort(), 'Seleccione Tipo');
       } catch (error) {
-        console.error("Error cargando datos desde Apps Script:", error);
-        // Si falla, intentamos una carga básica manual
-        llenarSelect('modelo', ['Corolla', 'Hilux', 'Prado', 'Yaris'], 'Seleccione Modelo');
+        console.error("Error cargando CSV:", error);
       }
     }
 
