@@ -123,7 +123,8 @@ try {
       const ciudades = new Set();
 
       datos.forEach(carro => {
-        const anio = carro.a_o ? carro.a_o.trim() : null;
+        const anioRaw = carro.a_o || carro.Año || carro.Anio;
+        const anio = anioRaw ? String(anioRaw).trim() : null;
         let modelo = null;
         if (carro['Categorías']) {
           const partes = carro['Categorías'].split('>');
@@ -131,7 +132,8 @@ try {
         }
         if (modelo) todosModelos.add(modelo);
         if (anio) todosAnios.add(anio);
-        if (carro.ciudad_de_la_placa) ciudades.add(carro.ciudad_de_la_placa.trim());
+        const ciudadRaw = carro.ciudad_de_la_placa || carro.Ciudad;
+        if (ciudadRaw) ciudades.add(String(ciudadRaw).trim());
 
         if (modelo && anio) {
           if (!aniosPorModelo[modelo]) aniosPorModelo[modelo] = new Set();
@@ -274,8 +276,8 @@ try {
       const ciudad = document.getElementById('filtroCiudad')?.value || '';
 
       inventarioFiltradoGlobal = inventarioGlobal.filter(carro => {
-        const cumpleTexto = carro.Title.toLowerCase().includes(texto) || (carro['Categorías'] && carro['Categorías'].toLowerCase().includes(texto));
-        const cumpleAnio = anio === '' || carro.a_o === anio;
+        const cumpleTexto = (carro.Title || "").toLowerCase().includes(texto) || (carro['Categorías'] && carro['Categorías'].toLowerCase().includes(texto));
+        const cumpleAnio = anio === '' || String(carro.a_o || "").trim() === anio;
         let cumpleModelo = true;
         if (modelo !== '') cumpleModelo = carro['Categorías'] && carro['Categorías'].includes('>' + modelo);
         const precio = Number(carro.Price) || 0;
@@ -283,8 +285,8 @@ try {
         const km = Number(carro.Mileage) || 0;
         const cumpleKm = km >= kmMin && km <= kmMax;
         const cumpleTransmision = transmision === '' || (carro.Transmission || '').toLowerCase().includes(transmision.toLowerCase());
-        const cumbleCombustible = combustible === '' || (carro['Fuel '] || carro['Fuel'] || '').toLowerCase().includes(combustible.toLowerCase());
-        const cumpleCiudad = ciudad === '' || (carro.ciudad_de_la_placa || '').toLowerCase() === ciudad.toLowerCase();
+        const cumbleCombustible = combustible === '' || (carro.Fuel || carro.combustible || '').toLowerCase().includes(combustible.toLowerCase());
+        const cumpleCiudad = ciudad === '' || String(carro.ciudad_de_la_placa || '').toLowerCase() === ciudad.toLowerCase();
         return cumpleTexto && cumpleAnio && cumpleModelo && cumplePrecio && cumpleKm && cumpleTransmision && cumbleCombustible && cumpleCiudad;
       });
 
