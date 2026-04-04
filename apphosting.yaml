@@ -1,0 +1,25 @@
+# Firebase App Hosting Configuration
+# See https://firebase.google.com/docs/app-hosting/configure
+
+# Runtime environment
+runConfig:
+  # The region to deploy the Cloud Run service.
+  region: us-central1
+  # The CPU and memory to allocate to each instance.
+  cpu: 1
+  memoryMiB: 512
+  # The concurrency and max instances settings.
+  concurrency: 80
+  minInstances: 0
+  maxInstances: 10
+
+# Environment variables
+# PUBLIC_ variables will be available on the client and server.
+# Others will only be available on the server.
+env:
+  - variable: PORT
+    value: 8080
+  - variable: HOST
+    value: 0.0.0.0
+  - variable: NODE_ENV
+    value: production
