@@ -12,6 +12,12 @@ let firebaseData: any[] = [];
 try {
   const snapshot = await getDocs(collection(db, 'toyotausados'));
   firebaseData = snapshot.docs.map(doc => ({ firebaseId: doc.id, ...doc.data() }));
+  // Ordenar por ID descendente (más recientes primero)
+  firebaseData.sort((a, b) => {
+    const idA = Number(a.ID) || 0;
+    const idB = Number(b.ID) || 0;
+    return idB - idA;
+  });
 } catch (e) {
   console.error("Error al cargar data de Firebase en SSR:", e);
 }
@@ -267,10 +273,15 @@ try {
       const texto = document.getElementById('buscador').value.toLowerCase();
       const modelo = document.getElementById('filtroModelo').value;
       const anio = document.getElementById('filtroAnio').value;
-      const precioMin = parseFloat(document.getElementById('filtroPrecioMin')?.value) || 0;
-      const precioMax = parseFloat(document.getElementById('filtroPrecioMax')?.value) || Infinity;
-      const kmMin = parseFloat(document.getElementById('filtroKmMin')?.value) || 0;
-      const kmMax = parseFloat(document.getElementById('filtroKmMax')?.value) || Infinity;
+      const precioMinInput = document.getElementById('filtroPrecioMin');
+      const precioMaxInput = document.getElementById('filtroPrecioMax');
+      const kmMinInput = document.getElementById('filtroKmMin');
+      const kmMaxInput = document.getElementById('filtroKmMax');
+
+      const precioMin = (precioMinInput && precioMinInput.value !== '') ? parseFloat(precioMinInput.value) : -Infinity;
+      const precioMax = (precioMaxInput && precioMaxInput.value !== '') ? parseFloat(precioMaxInput.value) : Infinity;
+      const kmMin = (kmMinInput && kmMinInput.value !== '') ? parseFloat(kmMinInput.value) : -Infinity;
+      const kmMax = (kmMaxInput && kmMaxInput.value !== '') ? parseFloat(kmMaxInput.value) : Infinity;
       const transmision = document.getElementById('filtroTransmision')?.value || '';
       const combustible = document.getElementById('filtroCombustible')?.value || '';
       const ciudad = document.getElementById('filtroCiudad')?.value || '';
@@ -290,7 +301,7 @@ try {
         return cumpleTexto && cumpleAnio && cumpleModelo && cumplePrecio && cumpleKm && cumpleTransmision && cumbleCombustible && cumpleCiudad;
       });
 
-      inventarioFiltradoGlobal = [...inventarioFiltradoGlobal].reverse();
+      // No revertir aquí ya que inventarioGlobal ya viene ordenado del servidor
 
       const grid = document.getElementById('catalogoGrid');
       const sinResultados = document.getElementById('sinResultados');

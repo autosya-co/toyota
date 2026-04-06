@@ -51,17 +51,18 @@ const urlAppsScriptServer = configSnap.exists() ? configSnap.data().url_apps_scr
 
     <!-- Grid de publicaciones -->
     <div id="gridPublicaciones" class="hidden grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"></div>
-  </div>
-
-  <input type="hidden" id="urlAppsScriptServer" value={urlAppsScriptServer} />
+    <input type="hidden" id="urlAppsScriptServer" value={urlAppsScriptServer} />
 
   <script>
     import { db } from '../lib/firebase';
     import { collection, query, where, getDocs } from 'firebase/firestore';
 
-    const urlServerEl = document.getElementById('urlAppsScriptServer') as HTMLInputElement;
-    const URL_APPS_SCRIPT = (urlServerEl?.value) || "https://script.google.com/macros/s/AKfycbzOu94N3mG5P7Z6jknzEnqtL1aDTKesxJ8jX2VgAdHw0doUeRdhr5X5O48COhhIcPy66g/exec";
+    function getAppsScriptUrl() {
+      const el = document.getElementById('urlAppsScriptServer');
+      return (el && 'value' in el ? el.value : null) || "https://script.google.com/macros/s/AKfycbzOu94N3mG5P7Z6jknzEnqtL1aDTKesxJ8jX2VgAdHw0doUeRdhr5X5O48COhhIcPy66g/exec";
+    }
 
+    const URL_APPS_SCRIPT = getAppsScriptUrl();
     const userEmail = localStorage.getItem('userEmail') || '';
     const isAdmin   = localStorage.getItem('isAdmin') === 'true';
 
@@ -69,11 +70,11 @@ const urlAppsScriptServer = configSnap.exists() ? configSnap.data().url_apps_scr
     const slugify = (t) => t ? t.toString().toLowerCase().trim().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/\s+/g,'-').replace(/[^\w\-]+/g,'').replace(/\-\-+/g,'-') : 'auto';
 
     async function cargarPublicaciones() {
-      try {
-        const loading      = document.getElementById('loading');
-        const estadoVacio  = document.getElementById('estadoVacio');
-        const grid         = document.getElementById('gridPublicaciones');
+      const loading      = document.getElementById('loading');
+      const estadoVacio  = document.getElementById('estadoVacio');
+      const grid         = document.getElementById('gridPublicaciones');
 
+      try {
         let q;
         if (isAdmin) {
             q = query(collection(db, "toyotausados"));
@@ -84,53 +85,55 @@ const urlAppsScriptServer = configSnap.exists() ? configSnap.data().url_apps_scr
         const snapshot = await getDocs(q);
         const results = snapshot.docs.map(doc => doc.data());
 
+        // Ordenar por ID descendente para que los nuevos aparezcan de primero
+        results.sort((a, b) => (Number(b.ID) || 0) - (Number(a.ID) || 0));
+
         // Filtrar IDs eliminados localmente
         const deletedIds = JSON.parse(localStorage.getItem('deletedVehicleIds') || '[]');
         let lista = results.filter(c => c.ID && c.Title && !deletedIds.includes(String(c.ID)));
-        lista = lista.reverse();
 
-        loading.classList.add('hidden');
+        if (loading) loading.classList.add('hidden');
 
         if (lista.length === 0) {
-          estadoVacio.classList.remove('hidden');
+          if (estadoVacio) estadoVacio.classList.remove('hidden');
           if (window.lucide) window.lucide.createIcons();
           return;
         }
 
-        grid.classList.remove('hidden');
-        grid.classList.add('grid');
+        if (grid) {
+          grid.classList.remove('hidden');
+          grid.classList.add('grid');
+          grid.innerHTML = ''; // Limpiar previo
+        }
 
         lista.forEach(carro => {
           let imgSrc = 'https://via.placeholder.com/400x300?text=Sin+Imagen';
           if (carro.Images) {
             const ids = carro.Images.split('|');
-            if (ids[0]?.trim()) imgSrc = `https://drive.google.com/thumbnail?id=${ids[0].trim()}&sz=w600`;
+            if (ids[0] && ids[0].trim()) imgSrc = `https://drive.google.com/thumbnail?id=${ids[0].trim()}&sz=w600`;
           }
           const slug = `/${carro.ID}/${slugify(carro.Title)}`;
 
-          // Crear tarjeta con DOM API (evita rotura por caracteres especiales en títulos)
           const wrapper = document.createElement('div');
           wrapper.className = 'bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-lg transition flex flex-col group';
 
-          // Imagen
           const imgLink = document.createElement('a');
           imgLink.href = slug;
           imgLink.className = 'relative aspect-[4/3] bg-gray-100 block overflow-hidden';
           const img = document.createElement('img');
           img.src = imgSrc;
-          img.alt = carro.Title;  // seguro: asignado por propiedad, no innerHTML
+          img.alt = carro.Title || 'Vehículo';
           img.className = 'w-full h-full object-cover group-hover:scale-105 transition-transform duration-300';
           img.loading = 'lazy';
           img.referrerPolicy = 'no-referrer';
           imgLink.appendChild(img);
 
-          // Cuerpo
           const body = document.createElement('div');
           body.className = 'p-4 flex flex-col flex-grow';
 
           const title = document.createElement('h2');
           title.className = 'font-bold text-gray-900 mb-1 line-clamp-2 text-sm leading-snug';
-          title.textContent = carro.Title; // seguro: textContent no interpreta HTML
+          title.textContent = carro.Title || 'Sin título';
 
           const price = document.createElement('p');
           price.className = 'text-red-700 font-extrabold text-xl mb-3';
@@ -154,7 +157,7 @@ const urlAppsScriptServer = configSnap.exists() ? configSnap.data().url_apps_scr
           btnBorrar.className = 'btn-borrar flex-1 text-center bg-red-50 hover:bg-red-100 text-red-700 font-semibold py-2 rounded-lg text-xs transition flex items-center justify-center gap-1 cursor-pointer';
           btnBorrar.innerHTML = '<i data-lucide="trash-2" class="w-3.5 h-3.5"></i> Borrar';
           btnBorrar.dataset.id     = carro.ID;
-          btnBorrar.dataset.titulo = carro.Title; // seguro: dataset no interpreta HTML
+          btnBorrar.dataset.titulo = carro.Title || 'esta publicación';
 
           actions.appendChild(btnVer);
           actions.appendChild(btnEditar);
@@ -164,23 +167,26 @@ const urlAppsScriptServer = configSnap.exists() ? configSnap.data().url_apps_scr
           body.appendChild(actions);
           wrapper.appendChild(imgLink);
           wrapper.appendChild(body);
-          grid.appendChild(wrapper);
+          if (grid) grid.appendChild(wrapper);
         });
 
         if (window.lucide) window.lucide.createIcons();
       } catch (error) {
-        document.getElementById('loading').innerHTML = '<p class="text-red-500 font-bold text-center py-20">Error al cargar publicaciones desde Firebase</p>';
+        console.error("Error en cargarPublicaciones:", error);
+        if (loading) loading.innerHTML = '<p class="text-red-500 font-bold text-center py-20">Error al cargar datos. Refresca la página.</p>';
       }
     }
     
     cargarPublicaciones();
 
-    // Event delegation: un solo listener para TODOS los botones "Borrar"
-    document.getElementById('gridPublicaciones').addEventListener('click', function(e) {
-      const btn = e.target.closest('.btn-borrar');
-      if (!btn) return;
-      eliminarPublicacion(btn.dataset.id, btn.dataset.titulo || 'esta publicación', btn);
-    });
+    const gridEl = document.getElementById('gridPublicaciones');
+    if (gridEl) {
+      gridEl.addEventListener('click', function(e) {
+        const btn = e.target.closest('.btn-borrar');
+        if (!btn) return;
+        eliminarPublicacion(btn.dataset.id, btn.dataset.titulo || 'esta publicación', btn);
+      });
+    }
 
     async function eliminarPublicacion(id, titulo, btn) {
       if (!confirm(`¿Eliminar "${titulo}"?\n\nEsta acción no se puede deshacer.`)) return;
@@ -199,7 +205,6 @@ const urlAppsScriptServer = configSnap.exists() ? configSnap.data().url_apps_scr
         try { data = await res.json(); } catch(_) {}
 
         if (data.exito) {
-          // Guardar ID en lista negra local para que no reaparezca por caché del CSV
           const deletedIds = JSON.parse(localStorage.getItem('deletedVehicleIds') || '[]');
           if (!deletedIds.includes(String(id))) deletedIds.push(String(id));
           localStorage.setItem('deletedVehicleIds', JSON.stringify(deletedIds));
