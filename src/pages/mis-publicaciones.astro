@@ -1,7 +1,12 @@
 ---
-export const prerender = true;
+export const prerender = false;
 import Layout from '../layouts/Layout.astro';
 import Navbar from '../components/Navbar.astro';
+import { db } from '../lib/firebase';
+import { doc, getDoc } from 'firebase/firestore';
+
+const configSnap = await getDoc(doc(db, "configuracion", "negocio"));
+const urlAppsScriptServer = configSnap.exists() ? configSnap.data().url_apps_script : "";
 ---
 
 <Layout title="Mis Publicaciones">
@@ -48,11 +53,11 @@ import Navbar from '../components/Navbar.astro';
     <div id="gridPublicaciones" class="hidden grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"></div>
   </div>
 
-  <script>
+  <script define:vars={{ urlAppsScriptServer }}>
     import { db } from '../lib/firebase';
     import { collection, query, where, getDocs } from 'firebase/firestore';
 
-    const URL_APPS_SCRIPT = "https://script.google.com/macros/s/AKfycbyYzJOLHusIyOR5ZCp0SXZ2qLxuQmBXELBBqcZTFH3GETB0PUTpLN9o98BIEoMFNAJL/exec";
+    const URL_APPS_SCRIPT = urlAppsScriptServer || "https://script.google.com/macros/s/AKfycbzOu94N3mG5P7Z6jknzEnqtL1aDTKesxJ8jX2VgAdHw0doUeRdhr5X5O48COhhIcPy66g/exec";
 
     const userEmail = localStorage.getItem('userEmail') || '';
     const isAdmin   = localStorage.getItem('isAdmin') === 'true';
