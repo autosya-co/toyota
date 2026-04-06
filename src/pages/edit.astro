@@ -272,15 +272,43 @@ const urlAppsScriptServer = configSnap.exists() ? configSnap.data().url_apps_scr
 
       const slugify = (t) => t ? t.toString().toLowerCase().trim().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/\s+/g,'-').replace(/[^\w\-]+/g,'').replace(/\-\-+/g,'-') : 'auto';
 
-      const convertirABase64 = (file) => {
-        return new Promise((resolve) => {
+      const aplicarMarcaDeAgua = (file) => {
+        return new Promise((resolve, reject) => {
+          const img = new Image();
           const reader = new FileReader();
-          reader.onload = (e) => resolve({ 
-            base64: e.target.result, 
-            nombre: file.name, 
-            mimeType: file.type 
-          });
+          reader.onload = (e) => img.src = e.target.result;
           reader.readAsDataURL(file);
+
+          img.onload = () => {
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            canvas.width = img.width;
+            canvas.height = img.height;
+            ctx.drawImage(img, 0, 0);
+
+            const wm = new Image();
+            wm.src = '/marca_de_agua_toyota.jpeg';
+            wm.crossOrigin = 'anonymous'; // Por seguridad aunque sea local
+            wm.onload = () => {
+              const wmWidth = canvas.width * 0.5;
+              const wmHeight = (wm.height * wmWidth) / wm.width;
+              const x = (canvas.width - wmWidth) / 2;
+              const y = canvas.height - wmHeight - 3;
+              ctx.drawImage(wm, x, y, wmWidth, wmHeight);
+              resolve({ 
+                base64: canvas.toDataURL('image/jpeg', 0.9), 
+                nombre: file.name, 
+                mimeType: 'image/jpeg' 
+              });
+            };
+            wm.onerror = () => {
+              console.error("Error cargando marca de agua");
+              const readerFallback = new FileReader();
+              readerFallback.onload = (env) => resolve({ base64: env.target.result, nombre: file.name, mimeType: file.type });
+              readerFallback.readAsDataURL(file);
+            };
+          };
+          img.onerror = () => reject(new Error("Error cargando la imagen para procesar"));
         });
       };
 
@@ -299,8 +327,7 @@ const urlAppsScriptServer = configSnap.exists() ? configSnap.data().url_apps_scr
         try {
           const imagenesProcesadas = await Promise.all(ordenArchivos.map(async (item) => {
             if (item.tipo === 'existente') return { tipo: 'existente', driveId: item.driveId };
-            const procesada = await convertirABase64(item.file);
-            return { tipo: 'nueva', base64: procesada.base64, nombre: procesada.nombre, mimeType: procesada.mimeType };
+            return await aplicarMarcaDeAgua(item.file);
           }));
           
           const payload = {

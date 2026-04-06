@@ -209,15 +209,51 @@ const urlAppsScriptServer = configSnap.exists() ? configSnap.data().url_apps_scr
 
     const slugify = (t) => t ? t.toString().toLowerCase().trim().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/\s+/g,'-').replace(/[^\w\-]+/g,'').replace(/\-\-+/g,'-') : 'auto';
 
-    const convertirABase64 = (fileObj) => {
-      return new Promise((resolve) => {
+    const aplicarMarcaDeAgua = (file) => {
+      return new Promise((resolve, reject) => {
+        const img = new Image();
         const reader = new FileReader();
-        reader.onload = (e) => resolve({ 
-          base64: e.target.result, 
-          nombre: fileObj.file.name, 
-          tipo: fileObj.file.type 
-        });
-        reader.readAsDataURL(fileObj.file);
+        reader.onload = (e) => img.src = e.target.result;
+        reader.readAsDataURL(file);
+
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          const ctx = canvas.getContext('2d');
+          
+          // Mantener máxima calidad
+          canvas.width = img.width;
+          canvas.height = img.height;
+          ctx.drawImage(img, 0, 0);
+
+          const wm = new Image();
+          wm.src = '/marca_de_agua_toyota.jpeg';
+          wm.crossOrigin = 'anonymous'; // Por seguridad aunque sea local
+          wm.onload = () => {
+            // Calcular dimensiones de la marca al 50% del ancho de la imagen principal
+            const wmWidth = canvas.width * 0.5;
+            const wmHeight = (wm.height * wmWidth) / wm.width;
+
+            // Posición: Centrado horizontalmente y a 3px del fondo
+            const x = (canvas.width - wmWidth) / 2;
+            const y = canvas.height - wmHeight - 3;
+
+            ctx.drawImage(wm, x, y, wmWidth, wmHeight);
+            
+            resolve({ 
+              base64: canvas.toDataURL('image/jpeg', 0.9), // Alta calidad
+              nombre: file.name, 
+              tipo: 'image/jpeg'
+            });
+          };
+          wm.onerror = () => {
+            console.error("Error cargando marca de agua");
+            // Si falla la marca, intentamos enviar la imagen original
+            const readerFallback = new FileReader();
+            readerFallback.onload = (e) => resolve({ base64: e.target.result, nombre: file.name, tipo: file.type });
+            readerFallback.readAsDataURL(file);
+          };
+        };
+        img.onerror = () => reject(new Error("Error cargando la imagen para procesar"));
       });
     };
 
@@ -236,7 +272,7 @@ const urlAppsScriptServer = configSnap.exists() ? configSnap.data().url_apps_scr
         btn.disabled = true; btn.classList.add('opacity-75'); spinner.classList.remove('hidden'); alerta.classList.add('hidden');
 
         try {
-          const archivosBase64 = await Promise.all(archivosOrdenados.map(obj => convertirABase64(obj)));
+          const archivosBase64 = await Promise.all(archivosOrdenados.map(obj => aplicarMarcaDeAgua(obj.file)));
           
           const payload = {
             titulo: document.getElementById('titulo').value,
