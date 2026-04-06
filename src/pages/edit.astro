@@ -298,13 +298,14 @@ const urlAppsScriptServer = configSnap.exists() ? configSnap.data().url_apps_scr
               resolve({ 
                 base64: canvas.toDataURL('image/jpeg', 0.9), 
                 nombre: file.name, 
-                mimeType: 'image/jpeg' 
+                mimeType: 'image/jpeg',   // Usar ambos solo por seguridad
+                tipo: 'image/jpeg'        // Algunos scripts de Apps Script prefieren 'tipo'
               });
             };
             wm.onerror = () => {
               console.error("Error cargando marca de agua");
               const readerFallback = new FileReader();
-              readerFallback.onload = (env) => resolve({ base64: env.target.result, nombre: file.name, mimeType: file.type });
+              readerFallback.onload = (env) => resolve({ base64: env.target.result, nombre: file.name, mimeType: file.type, tipo: file.type });
               readerFallback.readAsDataURL(file);
             };
           };
@@ -326,10 +327,18 @@ const urlAppsScriptServer = configSnap.exists() ? configSnap.data().url_apps_scr
 
         try {
           const imagenesProcesadas = await Promise.all(ordenArchivos.map(async (item) => {
+            if (!item) return null;
             if (item.tipo === 'existente') return { tipo: 'existente', driveId: item.driveId };
             const procesada = await aplicarMarcaDeAgua(item.file);
-            return { tipo: 'nueva', base64: procesada.base64, nombre: procesada.nombre, mimeType: procesada.mimeType };
+            return {
+              tipo: 'nueva',
+              base64: procesada.base64,
+              nombre: procesada.nombre,
+              mimeType: procesada.mimeType,
+              tipoMime: procesada.tipo // Alias adicional
+            };
           }));
+          const imagenesFiltradas = imagenesProcesadas.filter(Boolean);
           
           const payload = {
             accion: "editar",
@@ -340,7 +349,7 @@ const urlAppsScriptServer = configSnap.exists() ? configSnap.data().url_apps_scr
             transmision: document.getElementById('transmision').value, combustible: document.getElementById('combustible').value, motor: document.getElementById('motor').value, color: document.getElementById('color').value,
             digitoPlaca: document.getElementById('digitoPlaca').value, ciudadPlaca: document.getElementById('ciudadPlaca').value, nacionalidad: document.getElementById('nacionalidad').value, tipo: document.getElementById('tipo').value,
             dueno: document.getElementById('dueno').value, contenido: document.getElementById('contenido').value,
-            imagenesOrdenadas: imagenesProcesadas,
+            imagenesOrdenadas: imagenesFiltradas,
             usuario: localStorage.getItem('userEmail') || "usuario_desconocido"
           };
 

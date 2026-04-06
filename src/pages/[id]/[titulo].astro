@@ -76,48 +76,71 @@ const descripcionMeta = `${carro.Title} — ${anio}, ${formatearKm(carro.Mileage
           <!-- ─── Columna Izquierda: Carrusel ─── -->
           <div>
             {totalImagenes > 0 ? (
-              <div class="relative bg-black rounded-xl overflow-hidden" style="aspect-ratio: 4/3;">
-                <div id="carouselTrack"
-                  class="flex h-full transition-transform duration-500 ease-in-out"
-                  style="width: 100%; height: 100%;">
-                  {idsDrive.map((driveId, i) => (
-                    <div class="flex-shrink-0 flex items-center justify-center bg-black"
-                      style="min-width: 100%; height: 100%;">
-                      <img
-                        src={`https://drive.google.com/thumbnail?id=${driveId}&sz=w1200`}
-                        alt={carro.Title}
-                        class="w-full h-full object-contain"
-                        referrerpolicy="no-referrer"
-                        loading={i === 0 ? 'eager' : 'lazy'}
-                      />
+              <div class="space-y-4">
+                <!-- Main Image -->
+                <div class="relative bg-black rounded-xl overflow-hidden cursor-pointer group shadow-inner" style="aspect-ratio: 4/3;" id="openLightbox">
+                  <div id="carouselTrack"
+                    class="flex h-full transition-transform duration-500 ease-in-out"
+                    style="width: 100%; height: 100%;">
+                    {idsDrive.map((driveId, i) => (
+                      <div class="flex-shrink-0 flex items-center justify-center bg-black"
+                        style="min-width: 100%; height: 100%;">
+                        <img
+                          src={`https://drive.google.com/thumbnail?id=${driveId}&sz=w1200`}
+                          alt={carro.Title}
+                          class="w-full h-full object-contain select-none"
+                          referrerpolicy="no-referrer"
+                          loading={i === 0 ? 'eager' : 'lazy'}
+                        />
+                      </div>
+                    ))}
+                  </div>
+
+                  {totalImagenes > 1 && (
+                    <>
+                      <button id="prevBtn" aria-label="Anterior"
+                        class="absolute left-2 top-1/2 -translate-y-1/2 bg-black/40 hover:bg-black/70 text-white w-10 h-10 rounded-full flex items-center justify-center transition-all z-10 backdrop-blur-sm opacity-0 group-hover:opacity-100 focus:opacity-100">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" /></svg>
+                      </button>
+                      <button id="nextBtn" aria-label="Siguiente"
+                        class="absolute right-2 top-1/2 -translate-y-1/2 bg-black/40 hover:bg-black/70 text-white w-10 h-10 rounded-full flex items-center justify-center transition-all z-10 backdrop-blur-sm opacity-0 group-hover:opacity-100 focus:opacity-100">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" /></svg>
+                      </button>
+                    </>
+                  )}
+
+                  <div class="absolute bottom-2 right-2 bg-black/60 text-white text-[10px] px-2 py-1 rounded-md z-10 backdrop-blur-md border border-white/10 font-mono tracking-widest">
+                    <span id="currentImg">1</span> / {totalImagenes}
+                  </div>
+                  
+                  <!-- Fullscreen Hint -->
+                  <div class="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center pointer-events-none">
+                    <div class="bg-white/20 backdrop-blur-md p-3 rounded-full border border-white/30">
+                      <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7" />
+                      </svg>
                     </div>
-                  ))}
+                  </div>
                 </div>
 
+                <!-- Miniaturas -->
                 {totalImagenes > 1 && (
-                  <>
-                    <button id="prevBtn" aria-label="Anterior"
-                      class="absolute left-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/80 text-white w-9 h-9 rounded-full flex items-center justify-center transition z-10 shadow text-xl">
-                      &#8249;
-                    </button>
-                    <button id="nextBtn" aria-label="Siguiente"
-                      class="absolute right-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/80 text-white w-9 h-9 rounded-full flex items-center justify-center transition z-10 shadow text-xl">
-                      &#8250;
-                    </button>
-                    <div class="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5 z-10">
-                      {idsDrive.map((_, i) => (
-                        <button
-                          class={`dot w-2 h-2 rounded-full transition-colors ${i === 0 ? 'bg-white' : 'bg-white/40'}`}
-                          data-index={i}
-                        ></button>
-                      ))}
-                    </div>
-                  </>
+                  <div class="flex gap-2 overflow-x-auto pb-2 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent snap-x">
+                    {idsDrive.map((driveId, i) => (
+                      <button 
+                        class={`thumb-btn flex-shrink-0 w-20 md:w-24 aspect-video rounded-lg overflow-hidden border-2 transition-all snap-start ${i === 0 ? 'border-red-600 scale-95 shadow-md' : 'border-transparent opacity-60 hover:opacity-100'}`}
+                        data-index={i}
+                      >
+                        <img 
+                          src={`https://drive.google.com/thumbnail?id=${driveId}&sz=w200`} 
+                          class="w-full h-full object-cover" 
+                          alt={`Miniatura ${i + 1}`}
+                          loading="lazy"
+                        />
+                      </button>
+                    ))}
+                  </div>
                 )}
-
-                <div class="absolute top-2 right-3 bg-black/50 text-white text-xs px-2.5 py-1 rounded-full z-10 backdrop-blur-sm">
-                  <span id="currentImg">1</span> / {totalImagenes}
-                </div>
               </div>
             ) : (
               <div class="aspect-[4/3] bg-gray-100 rounded-xl flex items-center justify-center text-gray-400">
@@ -205,35 +228,141 @@ const descripcionMeta = `${carro.Title} — ${anio}, ${formatearKm(carro.Mileage
     </div>
   </div>
 
+  <!-- ─── Lightbox Modal (Fullscreen) ─── -->
+  <div id="lightbox" class="fixed inset-0 z-[100] bg-black/95 backdrop-blur-lg hidden flex-col transition-opacity duration-300 opacity-0 pointer-events-none">
+    <div class="flex justify-between items-center px-6 py-4">
+      <div class="text-white font-bold text-sm md:text-lg truncate max-w-[70%]">
+        {carro.Title}
+      </div>
+      <button id="closeLightbox" class="text-white/70 hover:text-white transition p-2">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+      </button>
+    </div>
+
+    <div class="flex-grow relative flex items-center justify-center overflow-hidden">
+       <!-- Navigation Buttons (Lightbox) -->
+       <button id="lbPrev" class="absolute left-4 top-1/2 -translate-y-1/2 bg-white/10 hover:bg-white/20 text-white w-12 h-12 rounded-full flex items-center justify-center transition z-[110] backdrop-blur-md border border-white/10">
+         <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" /></svg>
+       </button>
+       <button id="lbNext" class="absolute right-4 top-1/2 -translate-y-1/2 bg-white/10 hover:bg-white/20 text-white w-12 h-12 rounded-full flex items-center justify-center transition z-[110] backdrop-blur-md border border-white/10">
+         <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" /></svg>
+       </button>
+
+       <div id="lbTrack" class="flex h-full transition-transform duration-300 ease-out" style="width: 100%;">
+         {idsDrive.map((driveId) => (
+           <div class="flex-shrink-0 flex items-center justify-center" style="min-width: 100%; height: 100%;">
+             <img
+               src={`https://drive.google.com/thumbnail?id=${driveId}&sz=w1600`}
+               class="max-w-full max-h-full object-contain"
+               referrerpolicy="no-referrer"
+             />
+           </div>
+         ))}
+       </div>
+    </div>
+
+    <div class="py-6 flex flex-col items-center gap-2">
+      <div class="text-white/50 text-xs font-mono tracking-tighter uppercase">
+        Imagen <span id="lbCurrent">1</span> de {totalImagenes}
+      </div>
+      <div class="flex gap-1.5 overflow-x-auto max-w-[90vw] px-4 no-scrollbar">
+         {idsDrive.map((_, i) => (
+            <div data-lb-index={i} class={`lb-dot w-1.5 h-1.5 rounded-full transition-all ${i === 0 ? 'bg-red-500 w-4' : 'bg-white/20'}`}></div>
+         ))}
+      </div>
+    </div>
+  </div>
+
   <script is:inline define:vars={{ totalImagenes }}>
-    if (totalImagenes > 1) {
+    if (totalImagenes > 0) {
       let current = 0;
       const track = document.getElementById('carouselTrack');
-      const dots  = document.querySelectorAll('.dot');
       const counter = document.getElementById('currentImg');
+      const thumbBtns = document.querySelectorAll('.thumb-btn');
+      
+      // Lightbox elements
+      const lightbox = document.getElementById('lightbox');
+      const lbTrack = document.getElementById('lbTrack');
+      const lbCounter = document.getElementById('lbCurrent');
+      const lbDots = document.querySelectorAll('.lb-dot');
+      const openLbBtn = document.getElementById('openLightbox');
+      const closeLbBtn = document.getElementById('closeLightbox');
 
-      function goTo(index) {
+      function updateGallery(index) {
         current = (index + totalImagenes) % totalImagenes;
-        track.style.transform = `translateX(-${current * 100}%)`;
+        
+        // Carrusel Principal
+        if (track) track.style.transform = `translateX(-${current * 100}%)`;
         if (counter) counter.textContent = current + 1;
-        dots.forEach((d, i) => {
-          d.classList.toggle('bg-white', i === current);
-          d.classList.toggle('bg-white/40', i !== current);
+        
+        // Miniaturas
+        thumbBtns.forEach((btn, i) => {
+          if (i === current) {
+            btn.classList.add('border-red-600', 'scale-95', 'shadow-md');
+            btn.classList.remove('border-transparent', 'opacity-60');
+          } else {
+            btn.classList.remove('border-red-600', 'scale-95', 'shadow-md');
+            btn.classList.add('border-transparent', 'opacity-60');
+          }
+        });
+
+        // Lightbox
+        if (lbTrack) lbTrack.style.transform = `translateX(-${current * 100}%)`;
+        if (lbCounter) lbCounter.textContent = current + 1;
+        lbDots.forEach((dot, i) => {
+          if (i === current) {
+            dot.classList.add('bg-red-500', 'w-4');
+            dot.classList.remove('bg-white/20');
+          } else {
+            dot.classList.remove('bg-red-500', 'w-4');
+            dot.classList.add('bg-white/20');
+          }
         });
       }
 
-      document.getElementById('prevBtn')?.addEventListener('click', () => goTo(current - 1));
-      document.getElementById('nextBtn')?.addEventListener('click', () => goTo(current + 1));
-      dots.forEach((d, i) => d.addEventListener('click', () => goTo(i)));
+      // Event Listeners
+      document.getElementById('prevBtn')?.addEventListener('click', (e) => { e.stopPropagation(); updateGallery(current - 1); });
+      document.getElementById('nextBtn')?.addEventListener('click', (e) => { e.stopPropagation(); updateGallery(current + 1); });
+      thumbBtns.forEach((btn, i) => btn.addEventListener('click', () => updateGallery(i)));
 
-      let touchX = 0;
-      track?.addEventListener('touchstart', e => { touchX = e.touches[0].clientX; }, { passive: true });
-      track?.addEventListener('touchend', e => {
-        const diff = touchX - e.changedTouches[0].clientX;
-        if (Math.abs(diff) > 50) goTo(diff > 0 ? current + 1 : current - 1);
+      // Lightbox controls
+      openLbBtn?.addEventListener('click', () => {
+        lightbox.classList.remove('hidden', 'pointer-events-none');
+        setTimeout(() => lightbox.classList.remove('opacity-0'), 10);
+        document.body.style.overflow = 'hidden'; // Bloquear scroll
+        updateGallery(current);
       });
 
-      setInterval(() => goTo(current + 1), 6000);
+      const closeAction = () => {
+        lightbox.classList.add('opacity-0', 'pointer-events-none');
+        document.body.style.overflow = '';
+        setTimeout(() => lightbox.classList.add('hidden'), 300);
+      };
+
+      closeLbBtn?.addEventListener('click', closeAction);
+      document.getElementById('lbPrev')?.addEventListener('click', () => updateGallery(current - 1));
+      document.getElementById('lbNext')?.addEventListener('click', () => updateGallery(current + 1));
+
+      // Close on escape
+      document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeAction(); });
+
+      // Swipe support (Mobile)
+      let touchX = 0;
+      const addSwipe = (el) => {
+        el?.addEventListener('touchstart', e => { touchX = e.touches[0].clientX; }, { passive: true });
+        el?.addEventListener('touchend', e => {
+          const diff = touchX - e.changedTouches[0].clientX;
+          if (Math.abs(diff) > 50) updateGallery(diff > 0 ? current + 1 : current - 1);
+        });
+      };
+      addSwipe(track);
+      addSwipe(lbTrack);
+
+      // Auto-play opcional (solo si no se ha interactuado)
+      let interval = setInterval(() => updateGallery(current + 1), 7000);
+      const stopInterval = () => { if(interval) { clearInterval(interval); interval = null; } };
+      
+      [track, lbTrack, ...thumbBtns].forEach(el => el?.addEventListener('click', stopInterval, {once: true}));
     }
   </script>
 </Layout>
