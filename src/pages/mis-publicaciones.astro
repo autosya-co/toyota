@@ -53,11 +53,14 @@ const urlAppsScriptServer = configSnap.exists() ? configSnap.data().url_apps_scr
     <div id="gridPublicaciones" class="hidden grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"></div>
   </div>
 
-  <script define:vars={{ urlAppsScriptServer }}>
+  <input type="hidden" id="urlAppsScriptServer" value={urlAppsScriptServer} />
+
+  <script>
     import { db } from '../lib/firebase';
     import { collection, query, where, getDocs } from 'firebase/firestore';
 
-    const URL_APPS_SCRIPT = urlAppsScriptServer || "https://script.google.com/macros/s/AKfycbzOu94N3mG5P7Z6jknzEnqtL1aDTKesxJ8jX2VgAdHw0doUeRdhr5X5O48COhhIcPy66g/exec";
+    const urlServerEl = document.getElementById('urlAppsScriptServer') as HTMLInputElement;
+    const URL_APPS_SCRIPT = (urlServerEl?.value) || "https://script.google.com/macros/s/AKfycbzOu94N3mG5P7Z6jknzEnqtL1aDTKesxJ8jX2VgAdHw0doUeRdhr5X5O48COhhIcPy66g/exec";
 
     const userEmail = localStorage.getItem('userEmail') || '';
     const isAdmin   = localStorage.getItem('isAdmin') === 'true';
