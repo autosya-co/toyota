@@ -115,7 +115,7 @@ const urlAppsScriptServer = configSnap.exists() ? configSnap.data().url_apps_scr
           let imgSrc = 'https://via.placeholder.com/400x300?text=Sin+Imagen';
           if (carro.Images) {
             const ids = carro.Images.split('|');
-            if (ids[0] && ids[0].trim()) imgSrc = `https://drive.google.com/thumbnail?id=${ids[0].trim()}&sz=w600`;
+            if (ids[0] && ids[0].trim()) imgSrc = `https://drive.google.com/thumbnail?id=${ids[0].trim()}&sz=w300`;
           }
           const slug = `/${carro.ID}/${slugify(carro.Title)}`;
 
