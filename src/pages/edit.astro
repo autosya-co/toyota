@@ -270,6 +270,8 @@ const urlAppsScriptServer = configSnap.exists() ? configSnap.data().url_apps_scr
         }
       }
 
+      const slugify = (t) => t ? t.toString().toLowerCase().trim().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/\s+/g,'-').replace(/[^\w\-]+/g,'').replace(/\-\-+/g,'-') : 'auto';
+
       const convertirABase64 = (file) => {
         return new Promise((resolve) => {
           const reader = new FileReader();
@@ -321,8 +323,10 @@ const urlAppsScriptServer = configSnap.exists() ? configSnap.data().url_apps_scr
           if (resultado.exito) {
             alerta.classList.add('bg-green-100', 'text-green-800'); 
             alerta.innerText = "¡Cambios guardados! Redireccionando...";
+            const slug = slugify(document.getElementById('titulo').value);
+            const idParaRedirect = document.getElementById('idSecuencial').value;
             setTimeout(() => {
-              window.location.href = `/${resultado.id}/${resultado.slug}`;
+              window.location.href = `/${idParaRedirect}/${slug}`;
             }, 1500);
           } else throw new Error(resultado.mensaje);
 
