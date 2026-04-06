@@ -150,149 +150,155 @@ const urlAppsScriptServer = configSnap.exists() ? configSnap.data().url_apps_scr
     const URL_APPS_SCRIPT = urlAppsScriptServer || "https://script.google.com/macros/s/AKfycbzOu94N3mG5P7Z6jknzEnqtL1aDTKesxJ8jX2VgAdHw0doUeRdhr5X5O48COhhIcPy66g/exec";
     const URL_CSV_GOOGLE_SHEET = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQUXSBa4HqBFoaoXLVQW8Pvh7BRTfIhc3K8fz9wqBZHrE3DM1oo-A5v-5vsB74osUxNYOD5zEFA60vF/pub?gid=1038341741&single=true&output=csv";
 
-    async function cargarDatosDinámicos() {
-      if (typeof Papa === 'undefined') {
-        setTimeout(cargarDatosDinámicos, 500);
-        return;
-      }
-
-      Papa.parse(URL_CSV_GOOGLE_SHEET, {
-        download: true, header: true, 
-        complete: function(results) {
-          const modelosToyota = new Set();
-          const colores = new Set();
-          const tipos = new Set();
-          
-          results.data.forEach(item => {
-            if (item['Categorías'] && item['Categorías'].toLowerCase().startsWith('toyota')) {
-              const partes = item['Categorías'].split('>');
-              if (partes.length > 1) modelosToyota.add(partes[1].trim());
-            }
-            if (item['color_']) colores.add(item['color_'].trim());
-            if (item['tipo']) tipos.add(item['tipo'].trim());
-          });
-          
-          llenarSelect('modelo', Array.from(modelosToyota).sort(), 'Seleccione Modelo');
-          llenarSelect('color', Array.from(colores).sort(), 'Seleccione Color');
-          llenarSelect('tipo', Array.from(tipos).sort(), 'Seleccione Tipo');
-
-          // Seleccionar valores previos
-          if (vehiculoAEditar) {
-            if (vehiculoAEditar.Color || vehiculoAEditar.color_) document.getElementById('color').value = vehiculoAEditar.Color || vehiculoAEditar.color_;
-            if (vehiculoAEditar.Tipo || vehiculoAEditar.tipo) document.getElementById('tipo').value = vehiculoAEditar.Tipo || vehiculoAEditar.tipo;
-            if (vehiculoAEditar['Categorías']) {
-               const partes = vehiculoAEditar['Categorías'].split('>');
-               if (partes.length > 1) document.getElementById('modelo').value = partes[1].trim();
-            }
-          }
-        }
-      });
-    }
-
-    function llenarSelect(id, array, textoDefault) {
-      const el = document.getElementById(id);
-      if (el) el.innerHTML = `<option value="">${textoDefault}</option>` + array.map(item => `<option value="${item}">${item}</option>`).join('');
-    }
-
-    cargarDatosDinámicos();
-
-    let archivosAlmacenados = []; 
+    const formPublicar = document.getElementById('formPublicar');
     const galeria = document.getElementById('galeriaPrevia');
 
-    function initSortable() {
-       if (typeof Sortable !== 'undefined' && galeria) {
-          new Sortable(galeria, { animation: 150, onEnd: actualizarEtiquetaPortada });
-       } else {
-          setTimeout(initSortable, 500);
-       }
-    }
-    initSortable();
+    if (formPublicar) {
+      async function cargarDatosDinámicos() {
+        if (typeof Papa === 'undefined') {
+          setTimeout(cargarDatosDinámicos, 500);
+          return;
+        }
 
-    // Cargar imágenes existentes
-    if (vehiculoAEditar && vehiculoAEditar.Images && galeria) {
-      const idsDrive = vehiculoAEditar.Images.split('|').map(id => id.trim()).filter(Boolean);
-      idsDrive.forEach(driveId => {
-        const idUnico = Math.random().toString(36).substr(2, 9);
-        archivosAlmacenados.push({ id: idUnico, tipo: 'existente', driveId: driveId });
-        crearMiniatura(idUnico, `https://drive.google.com/thumbnail?id=${driveId}&sz=w800`);
-      });
-    }
+        Papa.parse(URL_CSV_GOOGLE_SHEET, {
+          download: true, header: true, 
+          complete: function(results) {
+            const modelosToyota = new Set();
+            const colores = new Set();
+            const tipos = new Set();
+            
+            results.data.forEach(item => {
+              if (item['Categorías'] && item['Categorías'].toLowerCase().startsWith('toyota')) {
+                const partes = item['Categorías'].split('>');
+                if (partes.length > 1) modelosToyota.add(partes[1].trim());
+              }
+              if (item['color_']) colores.add(item['color_'].trim());
+              if (item['tipo']) tipos.add(item['tipo'].trim());
+            });
+            
+            llenarSelect('modelo', Array.from(modelosToyota).sort(), 'Seleccione Modelo');
+            llenarSelect('color', Array.from(colores).sort(), 'Seleccione Color');
+            llenarSelect('tipo', Array.from(tipos).sort(), 'Seleccione Tipo');
 
-    const inputOculto = document.getElementById('inputImagenesOculto');
-    if (inputOculto) {
-      inputOculto.addEventListener('change', function(e) {
-        Array.from(e.target.files).forEach(file => {
-          const idUnico = Math.random().toString(36).substr(2, 9);
-          archivosAlmacenados.push({ id: idUnico, tipo: 'nueva', file: file });
-          const reader = new FileReader();
-          reader.onload = (ev) => crearMiniatura(idUnico, ev.target.result);
-          reader.readAsDataURL(file);
+            // Seleccionar valores previos
+            if (vehiculoAEditar) {
+              const colorEl = document.getElementById('color');
+              const tipoEl = document.getElementById('tipo');
+              const modeloEl = document.getElementById('modelo');
+
+              if (colorEl) colorEl.value = vehiculoAEditar.Color || vehiculoAEditar.color_ || "";
+              if (tipoEl) tipoEl.value = vehiculoAEditar.Tipo || vehiculoAEditar.tipo || "";
+              if (vehiculoAEditar['Categorías'] && modeloEl) {
+                const partes = vehiculoAEditar['Categorías'].split('>');
+                if (partes.length > 1) modeloEl.value = partes[1].trim();
+              }
+            }
+          }
         });
-        this.value = ""; 
-      });
-    }
+      }
 
-    function crearMiniatura(idUnico, src) {
-      const divWrapper = document.createElement('div');
-      divWrapper.className = 'relative group cursor-move aspect-video bg-gray-200 rounded overflow-hidden shadow';
-      divWrapper.setAttribute('data-id', idUnico);
-      divWrapper.innerHTML = `
-        <img src="${src}" class="object-cover w-full h-full pointer-events-none">
-        <button type="button" onclick="eliminarImagen('${idUnico}', this)" class="absolute top-1 right-1 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs hover:bg-red-600">✕</button>
-        <div class="etiqueta-portada hidden absolute bottom-0 left-0 right-0 bg-red-600 text-white text-[10px] text-center py-0.5 font-bold">PORTADA</div>
-      `;
-      galeria.appendChild(divWrapper);
-      actualizarEtiquetaPortada();
-    }
+      function llenarSelect(id, array, textoDefault) {
+        const el = document.getElementById(id);
+        if (el) el.innerHTML = `<option value="">${textoDefault}</option>` + array.map(item => `<option value="${item}">${item}</option>`).join('');
+      }
 
-    window.eliminarImagen = function(id, btnElement) {
-      archivosAlmacenados = archivosAlmacenados.filter(item => item.id !== id);
-      btnElement.parentElement.remove(); 
-      actualizarEtiquetaPortada();
-    }
+      cargarDatosDinámicos();
 
-    function actualizarEtiquetaPortada() {
-      if (!galeria) return;
-      const items = galeria.children;
-      for(let i=0; i<items.length; i++){
-        const etiqueta = items[i].querySelector('.etiqueta-portada');
-        if (etiqueta) {
-           if(i === 0) etiqueta.classList.remove('hidden'); else etiqueta.classList.add('hidden');
+      let archivosAlmacenados = []; 
+
+      function initSortable() {
+         if (typeof Sortable !== 'undefined' && galeria) {
+            new Sortable(galeria, { animation: 150, onEnd: actualizarEtiquetaPortada });
+         } else {
+            setTimeout(initSortable, 500);
+         }
+      }
+      initSortable();
+
+      // Cargar imágenes existentes
+      if (vehiculoAEditar && vehiculoAEditar.Images && galeria) {
+        const idsDrive = vehiculoAEditar.Images.split('|').map(id => id.trim()).filter(Boolean);
+        idsDrive.forEach(driveId => {
+          const idUnico = Math.random().toString(36).substr(2, 9);
+          archivosAlmacenados.push({ id: idUnico, tipo: 'existente', driveId: driveId });
+          crearMiniatura(idUnico, `https://drive.google.com/thumbnail?id=${driveId}&sz=w800`);
+        });
+      }
+
+      const inputOculto = document.getElementById('inputImagenesOculto');
+      if (inputOculto) {
+        inputOculto.addEventListener('change', function(e) {
+          Array.from(e.target.files).forEach(file => {
+            const idUnico = Math.random().toString(36).substr(2, 9);
+            archivosAlmacenados.push({ id: idUnico, tipo: 'nueva', file: file });
+            const reader = new FileReader();
+            reader.onload = (ev) => crearMiniatura(idUnico, ev.target.result);
+            reader.readAsDataURL(file);
+          });
+          this.value = ""; 
+        });
+      }
+
+      function crearMiniatura(idUnico, src) {
+        if (!galeria) return;
+        const divWrapper = document.createElement('div');
+        divWrapper.className = 'relative group cursor-move aspect-video bg-gray-200 rounded overflow-hidden shadow';
+        divWrapper.setAttribute('data-id', idUnico);
+        divWrapper.innerHTML = `
+          <img src="${src}" class="object-cover w-full h-full pointer-events-none">
+          <button type="button" onclick="eliminarImagen('${idUnico}', this)" class="absolute top-1 right-1 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs hover:bg-red-600">✕</button>
+          <div class="etiqueta-portada hidden absolute bottom-0 left-0 right-0 bg-red-600 text-white text-[10px] text-center py-0.5 font-bold">PORTADA</div>
+        `;
+        galeria.appendChild(divWrapper);
+        actualizarEtiquetaPortada();
+      }
+
+      window.eliminarImagen = function(id, btnElement) {
+        archivosAlmacenados = archivosAlmacenados.filter(item => item.id !== id);
+        btnElement.parentElement.remove(); 
+        actualizarEtiquetaPortada();
+      }
+
+      function actualizarEtiquetaPortada() {
+        if (!galeria) return;
+        const items = galeria.children;
+        for(let i=0; i<items.length; i++){
+          const etiqueta = items[i].querySelector('.etiqueta-portada');
+          if (etiqueta) {
+             if(i === 0) etiqueta.classList.remove('hidden'); else etiqueta.classList.add('hidden');
+          }
         }
       }
-    }
 
-    const aplicarMarcaDeAgua = (file) => {
-      return new Promise((resolve) => {
-        const reader = new FileReader();
-        reader.onload = (eventoReader) => {
-          const img = new Image();
-          img.onload = () => {
-            const watermarkImg = new Image();
-            watermarkImg.crossOrigin = "anonymous";
-            watermarkImg.onload = () => {
-              const canvas = document.createElement('canvas'); const ctx = canvas.getContext('2d');
-              canvas.width = img.width; canvas.height = img.height; ctx.drawImage(img, 0, 0);
-              const wmWidth = img.width * 0.50; const wmHeight = watermarkImg.height * (wmWidth / watermarkImg.width); 
-              const x = (img.width - wmWidth) / 2; const y = img.height - wmHeight - 3; 
-              ctx.drawImage(watermarkImg, x, y, wmWidth, wmHeight);
-              resolve({ base64: canvas.toDataURL(file.type), nombre: file.name, mimeType: file.type });
+      const aplicarMarcaDeAgua = (file) => {
+        return new Promise((resolve) => {
+          const reader = new FileReader();
+          reader.onload = (eventoReader) => {
+            const img = new Image();
+            img.onload = () => {
+              const watermarkImg = new Image();
+              watermarkImg.crossOrigin = "anonymous";
+              watermarkImg.onload = () => {
+                const canvas = document.createElement('canvas'); const ctx = canvas.getContext('2d');
+                canvas.width = img.width; canvas.height = img.height; ctx.drawImage(img, 0, 0);
+                const wmWidth = img.width * 0.50; const wmHeight = watermarkImg.height * (wmWidth / watermarkImg.width); 
+                const x = (img.width - wmWidth) / 2; const y = img.height - wmHeight - 3; 
+                ctx.drawImage(watermarkImg, x, y, wmWidth, wmHeight);
+                resolve({ base64: canvas.toDataURL(file.type), nombre: file.name, mimeType: file.type });
+              };
+              watermarkImg.onerror = () => {
+                const canvas = document.createElement('canvas'); const ctx = canvas.getContext('2d');
+                canvas.width = img.width; canvas.height = img.height; ctx.drawImage(img, 0, 0);
+                resolve({ base64: canvas.toDataURL(file.type), nombre: file.name, mimeType: file.type });
+              };
+              watermarkImg.src = "https://drive.usercontent.com/download?id=1zv4_Wd-Oabg8eErJWYc4zt1bkCi-XTNP";
             };
-            watermarkImg.onerror = () => {
-              const canvas = document.createElement('canvas'); const ctx = canvas.getContext('2d');
-              canvas.width = img.width; canvas.height = img.height; ctx.drawImage(img, 0, 0);
-              resolve({ base64: canvas.toDataURL(file.type), nombre: file.name, mimeType: file.type });
-            };
-            watermarkImg.src = "https://drive.usercontent.com/download?id=1zv4_Wd-Oabg8eErJWYc4zt1bkCi-XTNP";
+            img.src = eventoReader.target.result;
           };
-          img.src = eventoReader.target.result;
-        };
-        reader.readAsDataURL(file);
-      });
-    };
+          reader.readAsDataURL(file);
+        });
+      };
 
-    const formPublicar = document.getElementById('formPublicar');
-    if (formPublicar) {
       formPublicar.addEventListener('submit', async (e) => {
         e.preventDefault();
         const btn = document.getElementById('btnSubmit'); const btnText = document.getElementById('btnText');
@@ -303,7 +309,7 @@ const urlAppsScriptServer = configSnap.exists() ? configSnap.data().url_apps_scr
 
         if(ordenArchivos.length === 0) { alert("Debe haber al menos una foto"); return; }
         btn.disabled = true; btn.classList.add('opacity-75'); spinner.classList.remove('hidden'); alerta.classList.add('hidden');
-        btnText.innerText = "Guardando cambios...";
+        if (btnText) btnText.innerText = "Guardando cambios...";
 
         try {
           const imagenesProcesadas = await Promise.all(ordenArchivos.map(async (item) => {
@@ -337,7 +343,7 @@ const urlAppsScriptServer = configSnap.exists() ? configSnap.data().url_apps_scr
           alerta.classList.remove('hidden', 'bg-green-100', 'text-green-800'); alerta.classList.add('bg-red-100', 'text-red-800'); alerta.innerText = "Error: " + error.message;
         } finally {
           btn.disabled = false; btn.classList.remove('opacity-75'); spinner.classList.add('hidden');
-          btnText.innerText = "Guardar Cambios";
+          if (btnText) btnText.innerText = "Guardar Cambios";
         }
       });
     }
