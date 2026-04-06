@@ -221,7 +221,7 @@ const urlAppsScriptServer = configSnap.exists() ? configSnap.data().url_apps_scr
         idsDrive.forEach(driveId => {
           const idUnico = Math.random().toString(36).substr(2, 9);
           archivosAlmacenados.push({ id: idUnico, tipo: 'existente', driveId: driveId });
-          crearMiniatura(idUnico, `https://drive.google.com/thumbnail?id=${driveId}&sz=w800`);
+          crearMiniatura(idUnico, `https://drive.google.com/thumbnail?id=${driveId}&sz=w300`);
         });
       }
 
