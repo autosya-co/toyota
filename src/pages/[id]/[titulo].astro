@@ -244,25 +244,24 @@ const descripcionMeta = `${carro.Title} — ${anio}, ${formatearKm(carro.Mileage
       </button>
     </div>
 
-    <div class="flex-grow relative overflow-hidden bg-black/20">
+    <div class="flex-grow min-h-0 relative overflow-hidden bg-black/40">
        <!-- Navigation Buttons (Lightbox) -->
-       <button id="lbPrev" class="absolute left-4 top-1/2 -translate-y-1/2 bg-white/10 hover:bg-white/20 text-white w-12 h-12 rounded-full flex items-center justify-center transition z-[110] backdrop-blur-md border border-white/10 group">
+       <button id="lbPrev" class="absolute left-4 top-1/2 -translate-y-1/2 bg-white/10 hover:bg-white/20 text-white w-12 h-12 rounded-full flex items-center justify-center transition z-[110] backdrop-blur-md border border-white/10 group focus:outline-none">
          <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 transition-transform group-hover:-translate-x-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7" /></svg>
        </button>
-       <button id="lbNext" class="absolute right-4 top-1/2 -translate-y-1/2 bg-white/10 hover:bg-white/20 text-white w-12 h-12 rounded-full flex items-center justify-center transition z-[110] backdrop-blur-md border border-white/10 group">
+       <button id="lbNext" class="absolute right-4 top-1/2 -translate-y-1/2 bg-white/10 hover:bg-white/20 text-white w-12 h-12 rounded-full flex items-center justify-center transition z-[110] backdrop-blur-md border border-white/10 group focus:outline-none">
          <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 transition-transform group-hover:translate-x-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7" /></svg>
        </button>
 
        <div id="lbTrack" class="flex h-full transition-transform duration-300 ease-out" style="width: 100%;">
          {idsDrive.map((driveId) => (
-           <div class="flex-shrink-0 w-full h-full p-4 md:p-12 flex items-center justify-center">
-             <div class="relative w-full h-full flex items-center justify-center">
-                <img
-                  src={`https://drive.google.com/thumbnail?id=${driveId}&sz=w1600`}
-                  class="max-w-full max-h-full w-auto h-auto object-contain select-none shadow-2xl rounded-sm"
-                  referrerpolicy="no-referrer"
-                />
-             </div>
+           <div class="flex-shrink-0 w-full h-full p-2 md:p-8 lg:p-12 flex items-center justify-center overflow-hidden">
+              <img
+                src={`https://drive.google.com/thumbnail?id=${driveId}&sz=w1600`}
+                class="max-w-full max-h-full w-auto h-auto object-contain select-none shadow-2xl rounded-sm"
+                referrerpolicy="no-referrer"
+                style="display: block; margin: auto;"
+              />
            </div>
          ))}
        </div>
