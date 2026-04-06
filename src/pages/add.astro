@@ -291,7 +291,7 @@ const urlAppsScriptServer = configSnap.exists() ? configSnap.data().url_apps_scr
             dueno: document.getElementById('dueno').value, 
             contenido: document.getElementById('contenido').value,
             archivos: archivosBase64,
-            usuario: localStorage.getItem('userEmail') || "usuario_desconocido"
+            usuario: (localStorage.getItem('userEmail') || "usuario_desconocido").trim().toLowerCase()
           };
 
           const respuesta = await fetch(URL_APPS_SCRIPT, { method: 'POST', body: JSON.stringify(payload) });
