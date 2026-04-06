@@ -11,6 +11,9 @@ export default defineConfig({
     host: '0.0.0.0',
     port: process.env.PORT ? parseInt(process.env.PORT) : 8080
   },
+  image: {
+    service: { entrypoint: 'astro/assets/services/noop' }
+  },
   vite: {
     plugins: [tailwindcss()],
     ssr: {
