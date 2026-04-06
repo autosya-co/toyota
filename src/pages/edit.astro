@@ -3,7 +3,7 @@ export const prerender = false;
 import Layout from '../layouts/Layout.astro';
 import Navbar from '../components/Navbar.astro';
 import { db } from '../lib/firebase';
-import { collection, getDocs, query, where } from 'firebase/firestore';
+import { collection, getDocs, query, where, doc, getDoc } from 'firebase/firestore';
 
 const idVehiculo = Astro.url.searchParams.get('id');
 let vehiculoAEditar = null;
@@ -33,6 +33,8 @@ if (!idVehiculo) {
     errorMsg = "Error al conectar con la base de datos.";
   }
 }
+const configSnap = await getDoc(doc(db, "configuracion", "negocio"));
+const urlAppsScriptServer = configSnap.exists() ? configSnap.data().url_apps_script : "";
 ---
 
 <Layout title="Editar Vehículo | Toyota Usados">
@@ -129,6 +131,10 @@ if (!idVehiculo) {
           <div id="galeriaPrevia" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4 mt-4 min-h-[100px] p-4 bg-gray-50 border border-gray-200 rounded-lg empty:hidden"></div>
         </div>
 
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4 p-4 bg-gray-100 rounded-lg border border-gray-200 mb-6 font-mono text-[10px] text-gray-500">
+           <span>Apps Script: {urlAppsScriptServer ? 'CONECTADO (Firestore)' : 'POR DEFECTO (Legacy)'}</span>
+        </div>
+
         <div><label class="block text-sm font-semibold text-gray-700">Descripción detallada</label><textarea id="contenido" rows="5" required class="mt-1 w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-600">{vehiculoAEditar.Content}</textarea></div>
 
         <button type="submit" id="btnSubmit" class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-4 rounded-lg shadow flex justify-center items-center">
@@ -140,8 +146,8 @@ if (!idVehiculo) {
     )}
   </div>
 
-  <script is:inline define:vars={{ vehiculoAEditar }}>
-    const URL_APPS_SCRIPT = "https://script.google.com/macros/s/AKfycbzOu94N3mG5P7Z6jknzEnqtL1aDTKesxJ8jX2VgAdHw0doUeRdhr5X5O48COhhIcPy66g/exec";
+  <script is:inline define:vars={{ vehiculoAEditar, urlAppsScriptServer }}>
+    const URL_APPS_SCRIPT = urlAppsScriptServer || "https://script.google.com/macros/s/AKfycbzOu94N3mG5P7Z6jknzEnqtL1aDTKesxJ8jX2VgAdHw0doUeRdhr5X5O48COhhIcPy66g/exec";
     const URL_CSV_GOOGLE_SHEET = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQUXSBa4HqBFoaoXLVQW8Pvh7BRTfIhc3K8fz9wqBZHrE3DM1oo-A5v-5vsB74osUxNYOD5zEFA60vF/pub?gid=1038341741&single=true&output=csv";
 
     async function cargarDatosDinámicos() {

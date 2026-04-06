@@ -1,7 +1,9 @@
 ---
-export const prerender = true;
-import Layout from '../layouts/Layout.astro';
-import Navbar from '../components/Navbar.astro';
+import { db } from '../lib/firebase';
+import { doc, getDoc } from 'firebase/firestore';
+
+const configSnap = await getDoc(doc(db, "configuracion", "negocio"));
+const urlAppsScriptServer = configSnap.exists() ? configSnap.data().url_apps_script : "";
 ---
 
 <Layout title="Añadir Toyota | Toyota Usados">
@@ -88,7 +90,9 @@ import Navbar from '../components/Navbar.astro';
         <div id="galeriaPrevia" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4 mt-4 min-h-[100px] p-4 bg-gray-50 border border-gray-200 rounded-lg empty:hidden"></div>
       </div>
 
-      <div><label class="block text-sm font-semibold text-gray-700">Descripción detallada</label><textarea id="contenido" rows="5" required class="mt-1 w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-600"></textarea></div>
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-4 p-4 bg-gray-50 rounded-lg border border-gray-200 mb-6 font-mono text-[10px] text-gray-400">
+         <span>Apps Script: {urlAppsScriptServer ? 'CONECTADO' : 'PENDIENTE CONFIG'}</span>
+      </div>
 
       <button type="submit" id="btnSubmit" class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-4 rounded-lg shadow flex justify-center items-center">
         <span id="btnText">Publicar Vehículo</span>
@@ -98,8 +102,8 @@ import Navbar from '../components/Navbar.astro';
     </form>
   </div>
 
-  <script is:inline>
-    const URL_APPS_SCRIPT = "https://script.google.com/macros/s/AKfycbzOu94N3mG5P7Z6jknzEnqtL1aDTKesxJ8jX2VgAdHw0doUeRdhr5X5O48COhhIcPy66g/exec";
+  <script is:inline define:vars={{ urlAppsScriptServer }}>
+    const URL_APPS_SCRIPT = urlAppsScriptServer || "https://script.google.com/macros/s/AKfycbzOu94N3mG5P7Z6jknzEnqtL1aDTKesxJ8jX2VgAdHw0doUeRdhr5X5O48COhhIcPy66g/exec";
     const URL_CSV_GOOGLE_SHEET = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQUXSBa4HqBFoaoXLVQW8Pvh7BRTfIhc3K8fz9wqBZHrE3DM1oo-A5v-5vsB74osUxNYOD5zEFA60vF/pub?gid=1038341741&single=true&output=csv";
 
     async function cargarDatosDinámicos() {
