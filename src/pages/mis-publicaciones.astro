@@ -64,7 +64,8 @@ const urlAppsScriptServer = configSnap.exists() ? configSnap.data().url_apps_scr
 
     const URL_APPS_SCRIPT = getAppsScriptUrl();
     const userEmail = localStorage.getItem('userEmail') || '';
-    const isAdmin   = localStorage.getItem('isAdmin') === 'true';
+    const ADMIN_EMAILS = ['autosya.co@gmail.com'];
+    const isAdmin = (localStorage.getItem('isAdmin') === 'true') || ADMIN_EMAILS.includes(userEmail);
 
     const fmt = (v) => new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }).format(v || 0);
     const slugify = (t) => t ? t.toString().toLowerCase().trim().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/\s+/g,'-').replace(/[^\w\-]+/g,'').replace(/\-\-+/g,'-') : 'auto';
