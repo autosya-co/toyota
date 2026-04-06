@@ -57,13 +57,13 @@ const urlAppsScriptServer = configSnap.exists() ? configSnap.data().url_apps_scr
     import { db } from '../lib/firebase';
     import { collection, query, where, getDocs } from 'firebase/firestore';
 
-    function getAppsScriptUrl() {
+    const getAppsScriptUrl = () => {
       const el = document.getElementById('urlAppsScriptServer');
       return (el && 'value' in el ? el.value : null) || "https://script.google.com/macros/s/AKfycbzOu94N3mG5P7Z6jknzEnqtL1aDTKesxJ8jX2VgAdHw0doUeRdhr5X5O48COhhIcPy66g/exec";
     }
 
     const URL_APPS_SCRIPT = getAppsScriptUrl();
-    const userEmail = localStorage.getItem('userEmail') || '';
+    const userEmail = (localStorage.getItem('userEmail') || '').trim().toLowerCase();
     const ADMIN_EMAILS = ['autosya.co@gmail.com'];
     const isAdmin = (localStorage.getItem('isAdmin') === 'true') || ADMIN_EMAILS.includes(userEmail);
 
@@ -86,12 +86,16 @@ const urlAppsScriptServer = configSnap.exists() ? configSnap.data().url_apps_scr
         const snapshot = await getDocs(q);
         const results = snapshot.docs.map(doc => doc.data());
 
-        // Ordenar por ID descendente para que los nuevos aparezcan de primero
+        // Ordenar por ID descendente
         results.sort((a, b) => (Number(b.ID) || 0) - (Number(a.ID) || 0));
 
-        // Filtrar IDs eliminados localmente
+        // Filtrar IDs eliminados localmente (solo para usuarios normales)
         const deletedIds = JSON.parse(localStorage.getItem('deletedVehicleIds') || '[]');
-        let lista = results.filter(c => c.ID && c.Title && !deletedIds.includes(String(c.ID)));
+        let lista = results.filter(c => {
+            if (!c.ID || !c.Title) return false;
+            if (isAdmin) return true; // El admin ve todo, incluso lo oculto localmente
+            return !deletedIds.includes(String(c.ID));
+        });
 
         if (loading) loading.classList.add('hidden');
 
