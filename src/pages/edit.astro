@@ -327,7 +327,8 @@ const urlAppsScriptServer = configSnap.exists() ? configSnap.data().url_apps_scr
         try {
           const imagenesProcesadas = await Promise.all(ordenArchivos.map(async (item) => {
             if (item.tipo === 'existente') return { tipo: 'existente', driveId: item.driveId };
-            return await aplicarMarcaDeAgua(item.file);
+            const procesada = await aplicarMarcaDeAgua(item.file);
+            return { tipo: 'nueva', base64: procesada.base64, nombre: procesada.nombre, mimeType: procesada.mimeType };
           }));
           
           const payload = {
