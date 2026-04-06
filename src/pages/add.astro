@@ -4,7 +4,7 @@ import Layout from '../layouts/Layout.astro';
 import Navbar from '../components/Navbar.astro';
 ---
 
-<Layout title="Añadir Vehículo">
+<Layout title="Añadir Toyota | Toyota Usados">
   <script is:inline>
     // Proteger ruta: Exclusivo para usuarios logueados
     if (typeof localStorage !== 'undefined' && localStorage.getItem('isLoggedIn') !== 'true') {
@@ -14,48 +14,40 @@ import Navbar from '../components/Navbar.astro';
   <Navbar />
   
   <div class="max-w-4xl mx-auto bg-white rounded-xl shadow-md p-8 border border-gray-200 shadow-sm mt-8 mb-8">
-    <h1 class="text-3xl font-bold text-gray-800 mb-2">Publicar Vehículo</h1>
-    <p class="text-gray-500 mb-8">Arrastra las fotos, ordénalas y completa los datos del anuncio.</p>
+    <div class="flex justify-between items-center mb-6">
+      <h1 class="text-3xl font-bold text-gray-800">Publicar un Toyota</h1>
+      <a href="/" class="text-sm text-red-600 hover:underline">← Volver al Catálogo</a>
+    </div>
 
     <form id="formPublicar" class="space-y-6">
       <div>
         <label class="block text-sm font-semibold text-gray-700">Título del Anuncio</label>
-        <input type="text" id="titulo" required placeholder="Ej: Espectacular Toyota Corolla 2020 Único Dueño"
-          class="mt-1 w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-600 focus:border-transparent">
+        <input type="text" id="titulo" required placeholder="Ej: Toyota Hilux 2022 4x4" class="mt-1 w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-600 focus:border-transparent">
       </div>
 
-      <div class="grid grid-cols-1 md:grid-cols-1 gap-6">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div>
-          <label class="block text-sm font-semibold text-gray-700">Modelo</label>
-          <select id="modelo" required
-            class="mt-1 w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-600 focus:border-transparent bg-white">
+          <label class="block text-sm font-semibold text-gray-700">Marca</label>
+          <input type="text" disabled value="Toyota" class="mt-1 w-full px-4 py-2 border border-gray-300 bg-gray-100 rounded-lg text-gray-500 font-bold">
+        </div>
+        <div>
+          <label class="block text-sm font-semibold text-gray-700">Modelo de Toyota</label>
+          <select id="modelo" required class="mt-1 w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-600 bg-white">
             <option value="">Cargando modelos...</option>
           </select>
         </div>
       </div>
 
       <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div>
-          <label class="block text-sm font-semibold text-gray-700">Año (4 dígitos)</label>
-          <input type="number" id="anio" min="1950" max="2026" required
-            class="mt-1 w-full px-4 py-2 border border-gray-300 rounded-lg">
-        </div>
-        <div>
-          <label class="block text-sm font-semibold text-gray-700">Precio ($)</label>
-          <input type="number" id="precio" required class="mt-1 w-full px-4 py-2 border border-gray-300 rounded-lg">
-        </div>
-        <div>
-          <label class="block text-sm font-semibold text-gray-700">Kilometraje</label>
-          <input type="number" id="kilometraje" required
-            class="mt-1 w-full px-4 py-2 border border-gray-300 rounded-lg">
-        </div>
+        <div><label class="block text-sm font-semibold text-gray-700">Año</label><input type="number" id="anio" required class="mt-1 w-full px-4 py-2 border border-gray-300 rounded-lg"></div>
+        <div><label class="block text-sm font-semibold text-gray-700">Precio (en pesos, sin puntos)</label><input type="number" id="precio" required class="mt-1 w-full px-4 py-2 border border-gray-300 rounded-lg"></div>
+        <div><label class="block text-sm font-semibold text-gray-700">Kilometraje</label><input type="number" id="kilometraje" required class="mt-1 w-full px-4 py-2 border border-gray-300 rounded-lg"></div>
       </div>
 
       <div class="grid grid-cols-1 md:grid-cols-4 gap-4 bg-gray-50 p-4 rounded-lg border border-gray-200">
         <div>
           <label class="block text-xs font-semibold text-gray-700">Transmisión</label>
           <select id="transmision" required class="mt-1 w-full px-3 py-2 text-sm border border-gray-300 rounded">
-            <option value="">Seleccionar...</option>
             <option value="Mecánica">Mecánica</option>
             <option value="Automática">Automática</option>
           </select>
@@ -63,37 +55,18 @@ import Navbar from '../components/Navbar.astro';
         <div>
           <label class="block text-xs font-semibold text-gray-700">Combustible</label>
           <select id="combustible" required class="mt-1 w-full px-3 py-2 text-sm border border-gray-300 rounded">
-            <option value="">Seleccionar...</option>
             <option value="Gasolina">Gasolina</option>
             <option value="Diesel">Diesel</option>
-            <option value="Eléctrico">Eléctrico</option>
             <option value="Híbrido">Híbrido</option>
           </select>
         </div>
-        <div>
-          <label class="block text-xs font-semibold text-gray-700">Motor (Ej: 1.6)</label>
-          <input type="number" id="motor" step="0.1" required
-            class="mt-1 w-full px-3 py-2 text-sm border border-gray-300 rounded">
-        </div>
-        <div>
-          <label class="block text-xs font-semibold text-gray-700">Color</label>
-          <select id="color" required class="mt-1 w-full px-3 py-2 text-sm border border-gray-300 rounded">
-            <option value="">Cargando...</option>
-          </select>
-        </div>
+        <div><label class="block text-xs font-semibold text-gray-700">Motor</label><input type="number" id="motor" step="0.1" required class="mt-1 w-full px-3 py-2 text-sm border border-gray-300 rounded"></div>
+        <div><label class="block text-xs font-semibold text-gray-700">Color</label><select id="color" required class="mt-1 w-full px-3 py-2 text-sm border border-gray-300 rounded"></select></div>
       </div>
 
       <div class="grid grid-cols-1 md:grid-cols-5 gap-4">
-        <div>
-          <label class="block text-xs font-semibold text-gray-700">Último dígito placa</label>
-          <input type="number" id="digitoPlaca" min="0" max="9" required
-            class="mt-1 w-full px-3 py-2 text-sm border border-gray-300 rounded">
-        </div>
-        <div class="col-span-2">
-          <label class="block text-xs font-semibold text-gray-700">Ciudad de la Placa</label>
-          <input type="text" id="ciudadPlaca" required
-            class="mt-1 w-full px-3 py-2 text-sm border border-gray-300 rounded">
-        </div>
+        <div><label class="block text-xs font-semibold text-gray-700">Último dígito placa</label><input type="number" id="digitoPlaca" required class="mt-1 w-full px-3 py-2 text-sm border border-gray-300 rounded"></div>
+        <div class="col-span-2"><label class="block text-xs font-semibold text-gray-700">Ciudad de la Placa</label><input type="text" id="ciudadPlaca" required class="mt-1 w-full px-3 py-2 text-sm border border-gray-300 rounded"></div>
         <div>
           <label class="block text-xs font-semibold text-gray-700">Nacionalidad</label>
           <select id="nacionalidad" required class="mt-1 w-full px-3 py-2 text-sm border border-gray-300 rounded">
@@ -101,244 +74,161 @@ import Navbar from '../components/Navbar.astro';
             <option value="Venezolano">Venezolano</option>
           </select>
         </div>
-        <div>
-          <label class="block text-xs font-semibold text-gray-700">Tipo</label>
-          <select id="tipo" required class="mt-1 w-full px-3 py-2 text-sm border border-gray-300 rounded">
-            <option value="">Cargando...</option>
-          </select>
-        </div>
+        <div><label class="block text-xs font-semibold text-gray-700">Tipo</label><select id="tipo" required class="mt-1 w-full px-3 py-2 text-sm border border-gray-300 rounded"></select></div>
       </div>
+      
+      <div><label class="block text-sm font-semibold text-gray-700">Nombre del Dueño (Interno)</label><input type="text" id="dueno" class="mt-1 w-full px-4 py-2 border border-gray-300 rounded-lg"></div>
 
       <div>
-        <label class="block text-sm font-semibold text-gray-700">Nombre del Dueño (Oculto/Interno)</label>
-        <input type="text" id="dueno" class="mt-1 w-full px-4 py-2 border border-gray-300 rounded-lg">
-      </div>
-
-      <div>
-        <label class="block text-sm font-semibold text-gray-700 mb-2">Imágenes (Arrastra, suelta y reordena)</label>
-        <div id="dropzone"
-          class="border-2 border-dashed border-red-400 bg-red-50 hover:bg-red-100 rounded-lg p-8 text-center cursor-pointer transition-colors relative">
+        <label class="block text-sm font-semibold text-gray-700 mb-2">Imágenes (Se aplicará marca de agua)</label>
+        <div id="dropzone" class="border-2 border-dashed border-red-400 bg-red-50 hover:bg-red-100 rounded-lg p-8 text-center cursor-pointer transition-colors relative">
           <p class="text-red-800 font-medium">Haz clic aquí o arrastra tus fotos</p>
-          <p class="text-xs text-red-600 mt-1">La primera foto será la portada</p>
-          <input type="file" id="inputImagenesOculto" multiple accept="image/*"
-            class="absolute inset-0 w-full h-full opacity-0 cursor-pointer">
+          <input type="file" id="inputImagenesOculto" multiple accept="image/*" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer">
         </div>
-        <div id="galeriaPrevia"
-          class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4 mt-4 min-h-[100px] p-4 bg-gray-50 border border-gray-200 rounded-lg empty:hidden">
-        </div>
+        <div id="galeriaPrevia" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4 mt-4 min-h-[100px] p-4 bg-gray-50 border border-gray-200 rounded-lg empty:hidden"></div>
       </div>
 
-      <div>
-        <label class="block text-sm font-semibold text-gray-700">Descripción detallada</label>
-        <textarea id="contenido" rows="5" required
-          class="mt-1 w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-600 focus:border-transparent"></textarea>
-      </div>
+      <div><label class="block text-sm font-semibold text-gray-700">Descripción detallada</label><textarea id="contenido" rows="5" required class="mt-1 w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-600"></textarea></div>
 
-      <button type="submit" id="btnSubmit"
-        class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-4 rounded-lg transition-colors flex justify-center items-center shadow">
+      <button type="submit" id="btnSubmit" class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-4 rounded-lg shadow flex justify-center items-center">
         <span id="btnText">Publicar Vehículo</span>
-        <svg id="spinner" class="animate-spin ml-2 h-5 w-5 text-white hidden" xmlns="http://www.w3.org/2000/svg"
-          fill="none" viewBox="0 0 24 24">
-          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-          <path class="opacity-75" fill="currentColor"
-            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
-          </path>
-        </svg>
+        <svg id="spinner" class="animate-spin ml-2 h-5 w-5 text-white hidden" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
       </button>
-
       <div id="alerta" class="hidden p-4 rounded-lg text-center font-medium"></div>
     </form>
   </div>
 
-  <script>
-    import { db } from '../lib/firebase';
-    import { collection, getDocs } from 'firebase/firestore';
-
-    const URL_APPS_SCRIPT = "https://script.google.com/macros/s/AKfycbyYzJOLHusIyOR5ZCp0SXZ2qLxuQmBXELBBqcZTFH3GETB0PUTpLN9o98BIEoMFNAJL/exec";
-    const URL_CSV_PUBLISHED = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQUXSBa4HqBFoaoXLVQW8Pvh7BRTfIhc3K8fz9wqBZHrE3DM1oo-A5v-5vsB74osUxNYOD5zEFA60vF/pub?gid=1038341741&single=true&output=csv";
-    let modelosPorMarca = {};
+  <script is:inline>
+    const URL_APPS_SCRIPT = "https://script.google.com/macros/s/AKfycbyA0O-Ur2sSn3mtXEhHreA2VMjTFXm66Eg5WOiPgPr59X-6B0tL_ac-nb9bsmkvTKXjUA/exec";
+    const URL_CSV_GOOGLE_SHEET = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQUXSBa4HqBFoaoXLVQW8Pvh7BRTfIhc3K8fz9wqBZHrE3DM1oo-A5v-5vsB74osUxNYOD5zEFA60vF/pub?gid=1038341741&single=true&output=csv";
 
     async function cargarDatosDinámicos() {
-      try {
-        console.log("Iniciando carga de campos desde CSV...");
-        const respuesta = await fetch(URL_CSV_PUBLISHED);
-        let csv = await respuesta.text();
-        
-        // Limpiar caracteres invisibles y normalizar saltos de línea
-        csv = csv.replace(/\r/g, "");
-        const filasRaw = csv.split('\n').filter(f => f.trim() !== "");
-        
-        // Procesar filas (maneja comas dentro de comillas)
-        const filas = filasRaw.map(fila => {
-          return fila.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(campo => campo.replace(/^"|"$/g, '').trim());
-        });
-
-        const headers = filas[0];
-        console.log("Encabezados detectados:", headers);
-
-        const idxMarca = headers.findIndex(h => h.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").includes('categor'));
-        const idxColor = headers.findIndex(h => h.toLowerCase().includes('color'));
-        const idxTipo  = headers.findIndex(h => h.toLowerCase().includes('tipo'));
-
-        console.log("Índices encontrados:", { idxMarca, idxColor, idxTipo });
-
-        const colores = new Set();
-        const tipos   = new Set();
-        modelosPorMarca = {};
-
-        filas.slice(1).forEach(fila => {
-          // Procesar Categorías (Marca > Modelo)
-          if (idxMarca !== -1 && fila[idxMarca]) {
-            const partes = fila[idxMarca].split('>');
-            if (partes.length >= 1) {
-              const marca = partes[0].trim();
-              const modelo = partes[1] ? partes[1].trim() : null;
-              
-              if (!modelosPorMarca[marca]) modelosPorMarca[marca] = new Set();
-              if (modelo) modelosPorMarca[marca].add(modelo);
-            }
-          }
-          // Procesar Colores
-          if (idxColor !== -1 && fila[idxColor]) {
-             const val = fila[idxColor].trim();
-             if (val && val !== "-1") colores.add(val);
-          }
-          // Procesar Tipos
-          if (idxTipo !== -1 && fila[idxTipo]) {
-             const val = fila[idxTipo].trim();
-             if (val && val !== "-1") tipos.add(val);
-          }
-        });
-
-        const modelosToyota = Array.from(modelosPorMarca['Toyota'] || modelosPorMarca['TOYOTA'] || []).sort();
-        console.log("Modelos Toyota encontrados:", modelosToyota.length);
-
-        llenarSelect('modelo', modelosToyota, 'Seleccione Modelo');
-        llenarSelect('color', Array.from(colores).sort(), 'Seleccione Color');
-        llenarSelect('tipo', Array.from(tipos).sort(), 'Seleccione Tipo');
-        
-        console.log("Campos poblados con éxito.");
-      } catch (error) {
-        console.error("Error crítico cargando CSV:", error);
+      // Usamos el Papa global que viene del Layout
+      if (typeof Papa === 'undefined') {
+        console.error("PapaParse no cargado aún. Reintentando...");
+        setTimeout(cargarDatosDinámicos, 500);
+        return;
       }
+
+      Papa.parse(URL_CSV_GOOGLE_SHEET, {
+        download: true, header: true, 
+        complete: function(results) {
+          const modelosToyota = new Set();
+          const colores = new Set();
+          const tipos = new Set();
+          
+          results.data.forEach(item => {
+            if (item['Categorías'] && item['Categorías'].toLowerCase().startsWith('toyota')) {
+              const partes = item['Categorías'].split('>');
+              if (partes.length > 1) modelosToyota.add(partes[1].trim());
+            }
+            if (item['color_']) colores.add(item['color_'].trim());
+            if (item['tipo']) tipos.add(item['tipo'].trim());
+          });
+          
+          llenarSelect('modelo', Array.from(modelosToyota).sort(), 'Seleccione Modelo');
+          llenarSelect('color', Array.from(colores).sort(), 'Seleccione Color');
+          llenarSelect('tipo', Array.from(tipos).sort(), 'Seleccione Tipo');
+        }
+      });
     }
 
     function llenarSelect(id, array, textoDefault) {
-      const select = document.getElementById(id);
-      if(select){
-        select.innerHTML = `<option value="">${textoDefault}</option>` + array.map(item => `<option value="${item}">${item}</option>`).join('');
-      }
+      const el = document.getElementById(id);
+      if (el) el.innerHTML = `<option value="">${textoDefault}</option>` + array.map(item => `<option value="${item}">${item}</option>`).join('');
     }
 
-    // Selector de marca eliminado
-
+    // Ejecutar carga inicial
     cargarDatosDinámicos();
 
-    let archivosAlmacenados = [];
+    let archivosAlmacenados = []; 
     const inputOculto = document.getElementById('inputImagenesOculto');
     const galeria = document.getElementById('galeriaPrevia');
 
-    if(galeria && window.Sortable){
-      const sortable = new window.Sortable(galeria, {
-        animation: 150,
-        ghostClass: 'opacity-50',
-        onEnd: actualizarEtiquetaPortada
+    // Inicializar Sortable cuando esté disponible
+    function initSortable() {
+       if (typeof Sortable !== 'undefined' && galeria) {
+          new Sortable(galeria, { animation: 150, onEnd: actualizarEtiquetaPortada });
+       } else {
+          setTimeout(initSortable, 500);
+       }
+    }
+    initSortable();
+
+    if (inputOculto) {
+      inputOculto.addEventListener('change', function(e) {
+        Array.from(e.target.files).forEach(file => {
+          const idUnico = Math.random().toString(36).substr(2, 9);
+          archivosAlmacenados.push({ id: idUnico, file: file });
+          const reader = new FileReader();
+          reader.onload = (ev) => {
+            const divWrapper = document.createElement('div');
+            divWrapper.className = 'relative group cursor-move aspect-video bg-gray-200 rounded overflow-hidden shadow';
+            divWrapper.setAttribute('data-id', idUnico);
+            divWrapper.innerHTML = `
+              <img src="${ev.target.result}" class="object-cover w-full h-full pointer-events-none">
+              <button type="button" onclick="eliminarImagen('${idUnico}', this)" class="absolute top-1 right-1 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs hover:bg-red-600">✕</button>
+              <div class="etiqueta-portada hidden absolute bottom-0 left-0 right-0 bg-red-600 text-white text-[10px] text-center py-0.5 font-bold">PORTADA</div>
+            `;
+            galeria.appendChild(divWrapper);
+            actualizarEtiquetaPortada();
+          };
+          reader.readAsDataURL(file);
+        });
+        this.value = ""; 
       });
     }
 
-    if(inputOculto){
-      inputOculto.addEventListener('change', manejarArchivos);
-    }
-
-    function manejarArchivos(e) {
-      const nuevosArchivos = Array.from(e.target.files);
-
-      nuevosArchivos.forEach(file => {
-        const idUnico = Math.random().toString(36).substr(2, 9);
-        archivosAlmacenados.push({ id: idUnico, file: file });
-
-        const reader = new FileReader();
-        reader.onload = (e) => {
-          const divWrapper = document.createElement('div');
-          divWrapper.className = 'relative group cursor-move aspect-video bg-gray-200 rounded overflow-hidden shadow';
-          divWrapper.setAttribute('data-id', idUnico);
-
-          divWrapper.innerHTML = `
-            <img src="${e.target.result}" class="object-cover w-full h-full pointer-events-none">
-            <div class="absolute inset-0 bg-black bg-opacity-40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-               <span class="text-white text-xs font-bold">Mover</span>
-            </div>
-            <button type="button" onclick="eliminarImagen('${idUnico}', this)" class="absolute top-1 right-1 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs shadow hover:bg-red-600">✕</button>
-            <div class="etiqueta-portada hidden absolute bottom-0 left-0 right-0 bg-red-600 text-white text-[10px] text-center py-0.5 font-bold">PORTADA</div>
-          `;
-          galeria.appendChild(divWrapper);
-          actualizarEtiquetaPortada();
-        };
-        reader.readAsDataURL(file);
-      });
-      inputOculto.value = "";
-    }
-
-    window.eliminarImagen = function (id, btnElement) {
+    window.eliminarImagen = function(id, btnElement) {
       archivosAlmacenados = archivosAlmacenados.filter(item => item.id !== id);
-      btnElement.parentElement.remove();
+      btnElement.parentElement.remove(); 
       actualizarEtiquetaPortada();
     }
 
     function actualizarEtiquetaPortada() {
-      if(!galeria) return;
+      if (!galeria) return;
       const items = galeria.children;
-      for (let i = 0; i < items.length; i++) {
+      for(let i=0; i<items.length; i++){
         const etiqueta = items[i].querySelector('.etiqueta-portada');
-        if (i === 0) etiqueta.classList.remove('hidden');
-        else etiqueta.classList.add('hidden');
+        if (etiqueta) {
+           if(i === 0) etiqueta.classList.remove('hidden'); else etiqueta.classList.add('hidden');
+        }
       }
     }
 
     const aplicarMarcaDeAgua = (fileObj) => {
-      return new Promise((resolve, reject) => {
+      return new Promise((resolve) => {
         const reader = new FileReader();
         reader.onload = (eventoReader) => {
           const img = new Image();
           img.onload = () => {
-            const canvas = document.createElement('canvas');
-            const ctx = canvas.getContext('2d');
-            canvas.width = img.width; canvas.height = img.height;
-            // PASO 1: Dibujar la imagen original en el canvas primero
-            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-            // PASO 2: Cargar Logo como Marca de Agua
-            const logo = new Image();
-            logo.crossOrigin = "anonymous";
-            logo.onload = () => {
-              // safeBase64 ahora captura la imagen original ya dibujada
-              let safeBase64 = "";
-              try { safeBase64 = canvas.toDataURL(fileObj.file.type); } catch(e) {}
+            const watermarkImg = new Image();
+            watermarkImg.crossOrigin = "anonymous";
+            
+            watermarkImg.onload = () => {
+              const canvas = document.createElement('canvas'); 
+              const ctx = canvas.getContext('2d');
+              canvas.width = img.width; 
+              canvas.height = img.height; 
+              ctx.drawImage(img, 0, 0);
 
-              const maxLogoWidth = canvas.width * 0.50;
-              const ratio = maxLogoWidth / logo.width;
-              const logoWidth = maxLogoWidth;
-              const logoHeight = logo.height * ratio;
+              const wmWidth = img.width * 0.50; 
+              const wmHeight = watermarkImg.height * (wmWidth / watermarkImg.width); 
+              const x = (img.width - wmWidth) / 2; 
+              const y = img.height - wmHeight - 3; 
 
-              const x = (canvas.width / 2) - (logoWidth / 2);
-              const y = canvas.height - logoHeight - 3;
-
-              try {
-                ctx.globalAlpha = 0.8;
-                ctx.drawImage(logo, x, y, logoWidth, logoHeight);
-                ctx.globalAlpha = 1.0;
-                resolve({ nombre: fileObj.file.name, tipo: fileObj.file.type, base64: canvas.toDataURL(fileObj.file.type) });
-              } catch(err) {
-                // Si CORS contamina el canvas, retornar imagen sin marca de agua (pero no negra)
-                resolve({ nombre: fileObj.file.name, tipo: fileObj.file.type, base64: safeBase64 });
-              }
+              ctx.drawImage(watermarkImg, x, y, wmWidth, wmHeight);
+              resolve({ nombre: fileObj.file.name, tipo: fileObj.file.type, base64: canvas.toDataURL(fileObj.file.type) });
             };
-            logo.onerror = () => {
-              // Si falla el logo, subir la foto original sin marca de agua
-              try {
-                 resolve({ nombre: fileObj.file.name, tipo: fileObj.file.type, base64: canvas.toDataURL(fileObj.file.type) });
-              } catch(err){ resolve({ nombre: fileObj.file.name, tipo: fileObj.file.type, base64: "" }); }
+
+            watermarkImg.onerror = () => {
+              const canvas = document.createElement('canvas'); 
+              const ctx = canvas.getContext('2d');
+              canvas.width = img.width; canvas.height = img.height; ctx.drawImage(img, 0, 0);
+              resolve({ nombre: fileObj.file.name, tipo: fileObj.file.type, base64: canvas.toDataURL(fileObj.file.type) });
             };
-            logo.src = "https://lh3.googleusercontent.com/d/1VYwozoc5di8noEwzE5QpkwpSJ0rgUXZq";
+
+            watermarkImg.src = "https://drive.usercontent.com/download?id=1zv4_Wd-Oabg8eErJWYc4zt1bkCi-XTNP";
           };
           img.src = eventoReader.target.result;
         };
@@ -347,48 +237,40 @@ import Navbar from '../components/Navbar.astro';
     };
 
     const formPublicar = document.getElementById('formPublicar');
-    if(formPublicar){
+    if (formPublicar) {
       formPublicar.addEventListener('submit', async (e) => {
         e.preventDefault();
-        const btn = document.getElementById('btnSubmit'); const btnText = document.getElementById('btnText');
-        const spinner = document.getElementById('spinner'); const alerta = document.getElementById('alerta');
+        const btn = document.getElementById('btnSubmit'); 
+        const spinner = document.getElementById('spinner'); 
+        const alerta = document.getElementById('alerta');
 
         const elementosDOMOrdenados = Array.from(galeria.children);
-        const archivosOrdenados = elementosDOMOrdenados.map(el => {
-          const idDOM = el.getAttribute('data-id');
-          return archivosAlmacenados.find(item => item.id === idDOM);
-        });
+        const archivosOrdenados = elementosDOMOrdenados.map(el => archivosAlmacenados.find(item => item.id === el.getAttribute('data-id'))).filter(Boolean);
 
-        if (archivosOrdenados.length === 0) {
-          alert("Por favor sube al menos una foto del vehículo"); return;
-        }
-
-        btn.disabled = true; btn.classList.add('opacity-75', 'cursor-not-allowed');
-        btnText.innerText = 'Procesando imágenes y guardando...'; spinner.classList.remove('hidden'); alerta.classList.add('hidden');
+        if(archivosOrdenados.length === 0) { alert("Sube al menos una foto"); return; }
+        btn.disabled = true; btn.classList.add('opacity-75'); spinner.classList.remove('hidden'); alerta.classList.add('hidden');
 
         try {
           const archivosBase64 = await Promise.all(archivosOrdenados.map(obj => aplicarMarcaDeAgua(obj)));
-
-          const categoriaUnida = "Toyota>" + document.getElementById('modelo').value;
-
+          
           const payload = {
             titulo: document.getElementById('titulo').value,
-            categoriaUnida: categoriaUnida,
-            anio: document.getElementById('anio').value,
-            precio: document.getElementById('precio').value,
+            categoriaUnida: "Toyota>" + document.getElementById('modelo').value,
+            anio: document.getElementById('anio').value, 
+            precio: document.getElementById('precio').value, 
             kilometraje: document.getElementById('kilometraje').value,
-            transmision: document.getElementById('transmision').value,
-            combustible: document.getElementById('combustible').value,
-            motor: document.getElementById('motor').value,
+            transmision: document.getElementById('transmision').value, 
+            combustible: document.getElementById('combustible').value, 
+            motor: document.getElementById('motor').value, 
             color: document.getElementById('color').value,
-            digitoPlaca: document.getElementById('digitoPlaca').value,
-            ciudadPlaca: document.getElementById('ciudadPlaca').value,
-            nacionalidad: document.getElementById('nacionalidad').value,
+            digitoPlaca: document.getElementById('digitoPlaca').value, 
+            ciudadPlaca: document.getElementById('ciudadPlaca').value, 
+            nacionalidad: document.getElementById('nacionalidad').value, 
             tipo: document.getElementById('tipo').value,
-            dueno: document.getElementById('dueno').value,
+            dueno: document.getElementById('dueno').value, 
             contenido: document.getElementById('contenido').value,
             archivos: archivosBase64,
-            usuario: localStorage.getItem('userEmail') || ""
+            usuario: localStorage.getItem('userEmail') || "usuario_desconocido"
           };
 
           const respuesta = await fetch(URL_APPS_SCRIPT, { method: 'POST', body: JSON.stringify(payload) });
@@ -396,18 +278,14 @@ import Navbar from '../components/Navbar.astro';
 
           alerta.classList.remove('hidden', 'bg-red-100', 'text-red-800');
           if (resultado.exito) {
-            alerta.classList.add('bg-green-100', 'text-green-800');
-            alerta.innerText = resultado.mensaje;
-            document.getElementById('formPublicar').reset();
-            galeria.innerHTML = ""; archivosAlmacenados = [];
+            alerta.classList.add('bg-green-100', 'text-green-800'); alerta.innerText = resultado.mensaje;
+            formPublicar.reset(); galeria.innerHTML = ""; archivosAlmacenados = []; 
           } else throw new Error(resultado.mensaje);
 
         } catch (error) {
-          alerta.classList.remove('hidden', 'bg-green-100', 'text-green-800');
-          alerta.classList.add('bg-red-100', 'text-red-800'); alerta.innerText = "Error: " + error.message;
+          alerta.classList.remove('hidden', 'bg-green-100', 'text-green-800'); alerta.classList.add('bg-red-100', 'text-red-800'); alerta.innerText = "Error: " + error.message;
         } finally {
-          btn.disabled = false; btn.classList.remove('opacity-75', 'cursor-not-allowed');
-          btnText.innerText = 'Publicar Vehículo'; spinner.classList.add('hidden');
+          btn.disabled = false; btn.classList.remove('opacity-75'); spinner.classList.add('hidden');
         }
       });
     }
