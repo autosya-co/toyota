@@ -61,7 +61,7 @@ const urlAppsScriptServer = configSnap.exists() ? configSnap.data().url_apps_scr
 
   <script>
     import { db } from '../lib/firebase';
-    import { collection, query, where, getDocs, doc, updateDoc } from 'firebase/firestore';
+    import { collection, query, where, getDocs, doc, updateDoc, orderBy, limit } from 'firebase/firestore';
 
     let moderationMode = false;
     let globalResults = [];
@@ -93,19 +93,50 @@ const urlAppsScriptServer = configSnap.exists() ? configSnap.data().url_apps_scr
       if (isAdmin && adminControls) adminControls.classList.remove('hidden');
 
       try {
-        const q = query(collection(db, "toyotausados"));
-        const snapshot = await getDocs(q);
-        const results = snapshot.docs.map(doc => ({ 
-          firebaseDocId: doc.id, 
-          ...doc.data(),
-          normalizedUser: (doc.data().usuario || doc.data().Usuario || doc.data().user_email || "").toString().toLowerCase().trim()
-        }));
+        let results = [];
+        const colRef = collection(db, "toyotausados");
+
+        if (isAdmin && moderationMode) {
+          // Modo Moderación: Solo traer los últimos 200 anuncios para no saturar el navegador
+          const q = query(colRef, orderBy("ID", "desc"), limit(200));
+          const snapshot = await getDocs(q);
+          results = snapshot.docs.map(doc => ({ 
+            firebaseDocId: doc.id, 
+            ...doc.data(),
+            normalizedUser: (doc.data().usuario || doc.data().Usuario || doc.data().user_email || "").toString().toLowerCase().trim()
+          }));
+        } else {
+          // Modo Usuario normal: Buscar solo sus propios anuncios (OR simulado con 3 consultas)
+          console.log("Cargando anuncios para:", userEmail);
+          if (!userEmail) throw new Error("No se identificó el correo del usuario.");
+          
+          const q1 = query(colRef, where("usuario", "==", userEmail));
+          const q2 = query(colRef, where("Usuario", "==", userEmail));
+          const q3 = query(colRef, where("user_email", "==", userEmail));
+          
+          const [s1, s2, s3] = await Promise.all([getDocs(q1), getDocs(q2), getDocs(q3)]);
+          
+          const allDocs = [...s1.docs, ...s2.docs, ...s3.docs];
+          console.log("Documentos crudos encontrados:", allDocs.length);
+          
+          // Eliminar duplicados por ID de documento
+          const seenIds = new Set();
+          results = allDocs.reduce((acc, doc) => {
+            if (!seenIds.has(doc.id)) {
+              seenIds.add(doc.id);
+              acc.push({ 
+                firebaseDocId: doc.id, 
+                ...doc.data(),
+                normalizedUser: userEmail
+              });
+            }
+            return acc;
+          }, []);
+        }
         
+        console.log("Resultados procesados:", results.length, results);
         globalResults = results;
         let filteredResults = results;
-        if (!isAdmin || !moderationMode) {
-          filteredResults = results.filter(c => c.normalizedUser === userEmail);
-        }
 
         // Ordenar por ID descendente
         filteredResults.sort((a, b) => (Number(b.ID) || 0) - (Number(a.ID) || 0));
