@@ -11,7 +11,9 @@ import { collection, getDocs } from 'firebase/firestore';
 let firebaseData: any[] = [];
 try {
   const snapshot = await getDocs(collection(db, 'toyotausados'));
-  firebaseData = snapshot.docs.map(doc => ({ firebaseId: doc.id, ...doc.data() }));
+  firebaseData = snapshot.docs
+    .map(doc => ({ firebaseId: doc.id, ...doc.data() }))
+    .filter(carro => carro.publicado !== false); // Filtro de moderación
   // Ordenar por ID descendente (más recientes primero)
   firebaseData.sort((a, b) => {
     const idA = Number(a.ID) || 0;
@@ -108,8 +110,13 @@ try {
           return;
         }
 
-        // Filtro: Solo mostrar vehículos que tengan ID, Título y que su categoría incluya "Toyota"
-        inventarioGlobal = results.filter(carro => carro.ID && carro.Title && (carro['Categorías'] || "").toLowerCase().includes('toyota'));
+        // Filtro: Solo mostrar vehículos que tengan ID, Título, que su categoría incluya "Toyota" y que estén publicados
+        inventarioGlobal = results.filter(carro => 
+          carro.ID && 
+          carro.Title && 
+          (carro['Categorías'] || "").toLowerCase().includes('toyota') &&
+          carro.publicado !== false
+        );
         llenarFiltros(inventarioGlobal);
         document.getElementById('loading').classList.add('hidden');
         document.getElementById('catalogoGrid').classList.remove('hidden');

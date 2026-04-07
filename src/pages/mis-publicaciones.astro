@@ -55,7 +55,7 @@ const urlAppsScriptServer = configSnap.exists() ? configSnap.data().url_apps_scr
 
   <script>
     import { db } from '../lib/firebase';
-    import { collection, query, where, getDocs } from 'firebase/firestore';
+    import { collection, query, where, getDocs, doc, updateDoc } from 'firebase/firestore';
 
     const getAppsScriptUrl = () => {
       const el = document.getElementById('urlAppsScriptServer');
@@ -76,24 +76,26 @@ const urlAppsScriptServer = configSnap.exists() ? configSnap.data().url_apps_scr
       const grid         = document.getElementById('gridPublicaciones');
 
       try {
-        let q;
-        if (isAdmin) {
-            q = query(collection(db, "toyotausados"));
-        } else {
-            q = query(collection(db, "toyotausados"), where("usuario", "==", userEmail));
-        }
-        
+        // Obtenemos todo y filtramos en JS para mayor fiabilidad (evita problemas de índices o mayúsculas)
+        const q = query(collection(db, "toyotausados"));
         const snapshot = await getDocs(q);
-        const results = snapshot.docs.map(doc => doc.data());
+        const results = snapshot.docs.map(doc => ({ firebaseDocId: doc.id, ...doc.data() }));
+        
+        let filteredResults = results;
+        if (!isAdmin) {
+          filteredResults = results.filter(c => 
+            c.usuario && c.usuario.toLowerCase().trim() === userEmail.toLowerCase().trim()
+          );
+        }
 
         // Ordenar por ID descendente
-        results.sort((a, b) => (Number(b.ID) || 0) - (Number(a.ID) || 0));
+        filteredResults.sort((a, b) => (Number(b.ID) || 0) - (Number(a.ID) || 0));
 
         // Filtrar IDs eliminados localmente (solo para usuarios normales)
         const deletedIds = JSON.parse(localStorage.getItem('deletedVehicleIds') || '[]');
-        let lista = results.filter(c => {
+        let lista = filteredResults.filter(c => {
             if (!c.ID || !c.Title) return false;
-            if (isAdmin) return true; // El admin ve todo, incluso lo oculto localmente
+            if (isAdmin) return true; 
             return !deletedIds.includes(String(c.ID));
         });
 
@@ -133,6 +135,18 @@ const urlAppsScriptServer = configSnap.exists() ? configSnap.data().url_apps_scr
           img.referrerPolicy = 'no-referrer';
           imgLink.appendChild(img);
 
+          // Badge de Estado (Pendiente o Publicado)
+          const badge = document.createElement('div');
+          badge.className = 'absolute top-2 right-2 text-white text-[10px] font-extrabold px-2 py-1 rounded shadow-md z-10';
+          if (carro.publicado === false) {
+            badge.classList.add('bg-amber-500');
+            badge.textContent = 'PENDIENTE';
+          } else {
+            badge.classList.add('bg-green-600');
+            badge.textContent = 'PUBLICADO';
+          }
+          imgLink.appendChild(badge);
+
           const body = document.createElement('div');
           body.className = 'p-4 flex flex-col flex-grow';
 
@@ -145,7 +159,18 @@ const urlAppsScriptServer = configSnap.exists() ? configSnap.data().url_apps_scr
           price.textContent = fmt(carro.Price);
 
           const actions = document.createElement('div');
-          actions.className = 'mt-auto flex gap-1.5';
+          actions.className = 'mt-auto flex flex-wrap gap-1.5';
+
+          // Botón Publicar (Solo Admin y si está pendiente)
+          if (isAdmin && carro.publicado === false) {
+            const btnPublicar = document.createElement('button');
+            btnPublicar.type = 'button';
+            btnPublicar.className = 'btn-publicar w-full bg-green-600 hover:bg-green-700 text-white font-bold py-2 rounded-lg text-xs transition flex items-center justify-center gap-1 mb-1 shadow-sm';
+            btnPublicar.innerHTML = '<i data-lucide="check-circle" class="w-3.5 h-3.5"></i> Publicar Ahora';
+            btnPublicar.dataset.firebaseId = carro.firebaseDocId;
+            btnPublicar.dataset.titulo = carro.Title;
+            actions.appendChild(btnPublicar);
+          }
 
           const btnVer = document.createElement('a');
           btnVer.href = slug;
@@ -187,10 +212,41 @@ const urlAppsScriptServer = configSnap.exists() ? configSnap.data().url_apps_scr
     const gridEl = document.getElementById('gridPublicaciones');
     if (gridEl) {
       gridEl.addEventListener('click', function(e) {
-        const btn = e.target.closest('.btn-borrar');
-        if (!btn) return;
-        eliminarPublicacion(btn.dataset.id, btn.dataset.titulo || 'esta publicación', btn);
+        const btnBorrar = e.target.closest('.btn-borrar');
+        if (btnBorrar) {
+          eliminarPublicacion(btnBorrar.dataset.id, btnBorrar.dataset.titulo || 'esta publicación', btnBorrar);
+          return;
+        }
+
+        const btnPublicar = e.target.closest('.btn-publicar');
+        if (btnPublicar) {
+          aprobarPublicacion(btnPublicar.dataset.firebaseId, btnPublicar.dataset.titulo || 'este vehículo', btnPublicar);
+          return;
+        }
       });
+    }
+
+    async function aprobarPublicacion(firebaseId, titulo, btn) {
+      if (!confirm(`¿Deseas publicar "${titulo}" ahora?\n\nSerá visible inmediatamente en el catálogo.`)) return;
+
+      const contenidoOriginal = btn.innerHTML;
+      btn.disabled = true;
+      btn.textContent = 'Publicando...';
+
+      try {
+        const docRef = doc(db, "toyotausados", firebaseId);
+        await updateDoc(docRef, { publicado: true });
+        
+        alert('✓ ¡Vehículo publicado con éxito!');
+        // Recargar la lista para reflejar cambios
+        cargarPublicaciones();
+      } catch (error) {
+        console.error("Error al publicar:", error);
+        alert('Error al publicar el vehículo. Revisa la consola.');
+        btn.disabled = false;
+        btn.innerHTML = contenidoOriginal;
+        if (window.lucide) window.lucide.createIcons();
+      }
     }
 
     async function eliminarPublicacion(id, titulo, btn) {

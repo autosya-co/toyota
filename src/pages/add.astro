@@ -274,6 +274,10 @@ const urlAppsScriptServer = configSnap.exists() ? configSnap.data().url_apps_scr
         try {
           const archivosBase64 = await Promise.all(archivosOrdenados.map(obj => aplicarMarcaDeAgua(obj.file)));
           
+          const userEmail = (localStorage.getItem('userEmail') || "usuario_desconocido").trim().toLowerCase();
+          const ADMIN_EMAILS = ['autosya.co@gmail.com', 'autosyacucuta@gmail.com'];
+          const isAdmin = (localStorage.getItem('isAdmin') === 'true') || ADMIN_EMAILS.includes(userEmail);
+
           const payload = {
             titulo: document.getElementById('titulo').value,
             categoriaUnida: "Toyota>" + document.getElementById('modelo').value,
@@ -291,7 +295,8 @@ const urlAppsScriptServer = configSnap.exists() ? configSnap.data().url_apps_scr
             dueno: document.getElementById('dueno').value, 
             contenido: document.getElementById('contenido').value,
             archivos: archivosBase64,
-            usuario: (localStorage.getItem('userEmail') || "usuario_desconocido").trim().toLowerCase()
+            usuario: userEmail,
+            publicado: isAdmin
           };
 
           const respuesta = await fetch(URL_APPS_SCRIPT, { method: 'POST', body: JSON.stringify(payload) });
