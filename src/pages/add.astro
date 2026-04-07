@@ -312,12 +312,19 @@ const urlAppsScriptServer = configSnap.exists() ? configSnap.data().url_apps_scr
             alerta.classList.add('bg-green-100', 'text-green-800'); 
             alerta.innerText = "¡Publicado con éxito! Redireccionando...";
             const slug = slugify(document.getElementById('titulo').value);
-            const redirectId = resultado.id || resultado.ID;
+            const redirectId = resultado.id || resultado.ID || resultado.id_generado;
+            
             formPublicar.reset(); 
             galeria.innerHTML = ""; 
             archivosAlmacenados = []; 
+
             setTimeout(() => {
-              window.location.href = `/${redirectId}/${slug}`;
+              if (redirectId) {
+                window.location.href = `/${redirectId}/${slug}`;
+              } else {
+                console.warn("No se recibió ID de redirección, volviendo al panel.");
+                window.location.href = "/mis-publicaciones";
+              }
             }, 1500);
           } else throw new Error(resultado.mensaje);
 

@@ -65,6 +65,9 @@ const urlAppsScriptServer = configSnap.exists() ? configSnap.data().url_apps_scr
 
     let moderationMode = false;
     let globalResults = [];
+    const userEmail = (typeof localStorage !== 'undefined' ? (localStorage.getItem('userEmail') || "").trim().toLowerCase() : "");
+    const ADMIN_EMAILS = ['autosya.co@gmail.com', 'autosyacucuta@gmail.com', 'jjpr79@gmail.com'];
+    const isAdmin = (typeof localStorage !== 'undefined' ? ((localStorage.getItem('isAdmin') === 'true') || ADMIN_EMAILS.includes(userEmail)) : false);
 
     const getAppsScriptUrl = () => {
       const el = document.getElementById('urlAppsScriptServer');
@@ -83,9 +86,6 @@ const urlAppsScriptServer = configSnap.exists() ? configSnap.data().url_apps_scr
       const loading      = document.getElementById('loading');
       const estadoVacio  = document.getElementById('estadoVacio');
       const grid         = document.getElementById('gridPublicaciones');
-      const userEmail    = (localStorage.getItem('userEmail') || "").trim().toLowerCase();
-      const ADMIN_EMAILS = ['autosya.co@gmail.com', 'autosyacucuta@gmail.com', 'jjpr79@gmail.com'];
-      const isAdmin      = (localStorage.getItem('isAdmin') === 'true') || ADMIN_EMAILS.includes(userEmail);
 
       const debugEl     = document.getElementById('user-debug');
       if (debugEl) {
