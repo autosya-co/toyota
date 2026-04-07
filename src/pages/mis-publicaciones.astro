@@ -64,6 +64,7 @@ const urlAppsScriptServer = configSnap.exists() ? configSnap.data().url_apps_scr
     import { collection, query, where, getDocs, doc, updateDoc } from 'firebase/firestore';
 
     let moderationMode = false;
+    let globalResults = [];
 
     const getAppsScriptUrl = () => {
       const el = document.getElementById('urlAppsScriptServer');
@@ -100,10 +101,10 @@ const urlAppsScriptServer = configSnap.exists() ? configSnap.data().url_apps_scr
         const results = snapshot.docs.map(doc => ({ 
           firebaseDocId: doc.id, 
           ...doc.data(),
-          // Normalizar campos de usuario para facilitar filtrado
           normalizedUser: (doc.data().usuario || doc.data().Usuario || doc.data().user_email || "").toString().toLowerCase().trim()
         }));
         
+        globalResults = results;
         let filteredResults = results;
         if (!isAdmin || !moderationMode) {
           filteredResults = results.filter(c => c.normalizedUser === userEmail);
@@ -188,7 +189,7 @@ const urlAppsScriptServer = configSnap.exists() ? configSnap.data().url_apps_scr
           actions.className = 'mt-auto flex flex-wrap gap-1.5';
 
           // Botón Publicar (Solo Admin y si está pendiente)
-          if (isAdmin && (carro.publicado === false || carro.publicado === "false")) {
+          if (isAdmin && esPendiente) {
             const btnPublicar = document.createElement('button');
             btnPublicar.type = 'button';
             btnPublicar.className = 'btn-publicar w-full bg-green-600 hover:bg-green-700 text-white font-bold py-2 rounded-lg text-xs transition flex items-center justify-center gap-1 mb-1 shadow-sm';
@@ -288,7 +289,7 @@ const urlAppsScriptServer = configSnap.exists() ? configSnap.data().url_apps_scr
         const updateData = { publicado: true };
 
         // Auto-reclamar si no tiene dueño
-        const currentDoc = filteredResults.find(c => c.firebaseDocId === firebaseId);
+        const currentDoc = globalResults.find(c => c.firebaseDocId === firebaseId);
         if (currentDoc && !currentDoc.normalizedUser) {
            updateData.usuario = userEmail;
            console.log("Auto-asignando usuario al aprobar huérfano.");
