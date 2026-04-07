@@ -13,7 +13,7 @@ try {
   const snapshot = await getDocs(collection(db, 'toyotausados'));
   firebaseData = snapshot.docs
     .map(doc => ({ firebaseId: doc.id, ...doc.data() }))
-    .filter(carro => carro.publicado !== false); // Filtro de moderación
+    .filter(carro => carro.publicado !== false && carro.publicado !== "false"); // Filtro robusto (booleano o string)
   // Ordenar por ID descendente (más recientes primero)
   firebaseData.sort((a, b) => {
     const idA = Number(a.ID) || 0;
@@ -115,7 +115,7 @@ try {
           carro.ID && 
           carro.Title && 
           (carro['Categorías'] || "").toLowerCase().includes('toyota') &&
-          carro.publicado !== false
+          carro.publicado !== false && carro.publicado !== "false"
         );
         llenarFiltros(inventarioGlobal);
         document.getElementById('loading').classList.add('hidden');
@@ -385,6 +385,8 @@ try {
       }
     });
 
+    
+    console.log("ToyotaDashboard: Version MOD-V2.0 Active (Apr 7)");
     cargarCatalogo();
   </script>
 </Layout>

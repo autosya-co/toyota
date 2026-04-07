@@ -32,7 +32,7 @@ try {
 if (!carro) {
   return Astro.redirect('/404');
 }
-const esPendiente = carro.publicado === false;
+const esPendiente = (carro.publicado === false || carro.publicado === "false");
 
 const formatearDinero = (cantidad: any) =>
   new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }).format(Number(cantidad) || 0);

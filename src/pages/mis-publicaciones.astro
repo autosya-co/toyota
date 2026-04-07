@@ -83,9 +83,11 @@ const urlAppsScriptServer = configSnap.exists() ? configSnap.data().url_apps_scr
         
         let filteredResults = results;
         if (!isAdmin) {
-          filteredResults = results.filter(c => 
-            c.usuario && c.usuario.toLowerCase().trim() === userEmail.toLowerCase().trim()
-          );
+          filteredResults = results.filter(c => {
+            const emailInDoc = (c.usuario || c.Usuario || c.user_email || "").toString().toLowerCase().trim();
+            const emailLogin = userEmail.toLowerCase().trim();
+            return emailInDoc === emailLogin;
+          });
         }
 
         // Ordenar por ID descendente
@@ -138,7 +140,7 @@ const urlAppsScriptServer = configSnap.exists() ? configSnap.data().url_apps_scr
           // Badge de Estado (Pendiente o Publicado)
           const badge = document.createElement('div');
           badge.className = 'absolute top-2 right-2 text-white text-[10px] font-extrabold px-2 py-1 rounded shadow-md z-10';
-          if (carro.publicado === false) {
+          if (carro.publicado === false || carro.publicado === "false") {
             badge.classList.add('bg-amber-500');
             badge.textContent = 'PENDIENTE';
           } else {
@@ -162,7 +164,7 @@ const urlAppsScriptServer = configSnap.exists() ? configSnap.data().url_apps_scr
           actions.className = 'mt-auto flex flex-wrap gap-1.5';
 
           // Botón Publicar (Solo Admin y si está pendiente)
-          if (isAdmin && carro.publicado === false) {
+          if (isAdmin && (carro.publicado === false || carro.publicado === "false")) {
             const btnPublicar = document.createElement('button');
             btnPublicar.type = 'button';
             btnPublicar.className = 'btn-publicar w-full bg-green-600 hover:bg-green-700 text-white font-bold py-2 rounded-lg text-xs transition flex items-center justify-center gap-1 mb-1 shadow-sm';
