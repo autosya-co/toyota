@@ -22,7 +22,7 @@ const urlAppsScriptServer = configSnap.exists() ? configSnap.data().url_apps_scr
     <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-8 gap-4">
       <div>
         <h1 class="text-3xl font-extrabold text-gray-900">Mis Publicaciones</h1>
-        <p class="text-gray-500 mt-1 text-sm">Administra los vehículos que has publicado</p>
+        <p id="user-debug" class="text-gray-500 mt-1 text-sm">Administra los vehículos que has publicado</p>
       </div>
       <a href="/add" class="bg-red-600 hover:bg-red-700 text-white font-bold px-5 py-2.5 rounded-lg transition shadow-md flex items-center gap-2 text-sm">
         <i data-lucide="plus" class="w-4 h-4"></i>
@@ -74,9 +74,16 @@ const urlAppsScriptServer = configSnap.exists() ? configSnap.data().url_apps_scr
       const loading      = document.getElementById('loading');
       const estadoVacio  = document.getElementById('estadoVacio');
       const grid         = document.getElementById('gridPublicaciones');
+      const userEmail    = (localStorage.getItem('userEmail') || "").trim().toLowerCase();
+      const ADMIN_EMAILS = ['autosya.co@gmail.com', 'autosyacucuta@gmail.com'];
+      const isAdmin      = (localStorage.getItem('isAdmin') === 'true') || ADMIN_EMAILS.includes(userEmail);
+
+      const debugEl     = document.getElementById('user-debug');
+      if (debugEl) {
+        debugEl.innerHTML = `<span class="text-xs bg-gray-100 px-2 py-1 rounded border border-gray-200">Email activo: <b>${userEmail || "No identificado"}</b></span>`;
+      }
 
       try {
-        // Obtenemos todo y filtramos en JS para mayor fiabilidad (evita problemas de índices o mayúsculas)
         const q = query(collection(db, "toyotausados"));
         const snapshot = await getDocs(q);
         const results = snapshot.docs.map(doc => ({ firebaseDocId: doc.id, ...doc.data() }));
@@ -140,7 +147,12 @@ const urlAppsScriptServer = configSnap.exists() ? configSnap.data().url_apps_scr
           // Badge de Estado (Pendiente o Publicado)
           const badge = document.createElement('div');
           badge.className = 'absolute top-2 right-2 text-white text-[10px] font-extrabold px-2 py-1 rounded shadow-md z-10';
-          if (carro.publicado === false || carro.publicado === "false") {
+          
+          const idNum = Number(carro.ID) || 0;
+          const isApproved = carro.publicado === true || carro.publicado === "true";
+          const esPendiente = idNum > 42300 ? !isApproved : (carro.publicado === false || carro.publicado === "false");
+
+          if (esPendiente) {
             badge.classList.add('bg-amber-500');
             badge.textContent = 'PENDIENTE';
           } else {

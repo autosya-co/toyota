@@ -274,7 +274,12 @@ const urlAppsScriptServer = configSnap.exists() ? configSnap.data().url_apps_scr
         try {
           const archivosBase64 = await Promise.all(archivosOrdenados.map(obj => aplicarMarcaDeAgua(obj.file)));
           
-          const userEmail = (localStorage.getItem('userEmail') || "usuario_desconocido").trim().toLowerCase();
+          const userEmail = (localStorage.getItem('userEmail') || "").trim().toLowerCase();
+          if (!userEmail || userEmail === "usuario_desconocido") {
+            alert("No se detectó una sesión activa. Por favor, inicia sesión con Google antes de publicar.");
+            window.location.reload();
+            return;
+          }
           const ADMIN_EMAILS = ['autosya.co@gmail.com', 'autosyacucuta@gmail.com'];
           const isAdmin = (localStorage.getItem('isAdmin') === 'true') || ADMIN_EMAILS.includes(userEmail);
 

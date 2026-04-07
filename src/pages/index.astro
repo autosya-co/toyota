@@ -13,7 +13,14 @@ try {
   const snapshot = await getDocs(collection(db, 'toyotausados'));
   firebaseData = snapshot.docs
     .map(doc => ({ firebaseId: doc.id, ...doc.data() }))
-    .filter(carro => carro.publicado !== false && carro.publicado !== "false"); // Filtro robusto (booleano o string)
+    .filter(carro => {
+      const idNum = Number(carro.ID) || 0;
+      const isApproved = carro.publicado === true || carro.publicado === "true";
+      // Si el ID es mayor a 42300 (anuncios nuevos), solo se muestra si está aprobado.
+      // Si es menor o igual (catálogo previo), se muestra por defecto.
+      if (idNum > 42300) return isApproved;
+      return carro.publicado !== false && carro.publicado !== "false";
+    });
   // Ordenar por ID descendente (más recientes primero)
   firebaseData.sort((a, b) => {
     const idA = Number(a.ID) || 0;
@@ -111,12 +118,12 @@ try {
         }
 
         // Filtro: Solo mostrar vehículos que tengan ID, Título, que su categoría incluya "Toyota" y que estén publicados
-        inventarioGlobal = results.filter(carro => 
-          carro.ID && 
-          carro.Title && 
-          (carro['Categorías'] || "").toLowerCase().includes('toyota') &&
-          carro.publicado !== false && carro.publicado !== "false"
-        );
+        inventarioGlobal = results.filter(carro => {
+          const idNum = Number(carro.ID) || 0;
+          const isApproved = carro.publicado === true || carro.publicado === "true";
+          if (idNum > 42300) return isApproved;
+          return carro.ID && carro.Title && (carro['Categorías'] || "").toLowerCase().includes('toyota') && carro.publicado !== false && carro.publicado !== "false";
+        });
         llenarFiltros(inventarioGlobal);
         document.getElementById('loading').classList.add('hidden');
         document.getElementById('catalogoGrid').classList.remove('hidden');
