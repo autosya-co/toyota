@@ -24,10 +24,16 @@ const urlAppsScriptServer = configSnap.exists() ? configSnap.data().url_apps_scr
         <h1 class="text-3xl font-extrabold text-gray-900">Mis Publicaciones</h1>
         <p id="user-debug" class="text-gray-500 mt-1 text-sm">Administra los vehículos que has publicado</p>
       </div>
-      <a href="/add" class="bg-red-600 hover:bg-red-700 text-white font-bold px-5 py-2.5 rounded-lg transition shadow-md flex items-center gap-2 text-sm">
-        <i data-lucide="plus" class="w-4 h-4"></i>
-        Nueva Publicación
-      </a>
+      <div class="flex gap-2">
+        <div id="admin-controls" class="hidden flex bg-gray-100 p-1 rounded-lg border border-gray-200 mr-2">
+          <button id="btn-show-mine" class="px-3 py-1.5 text-xs font-bold rounded-md bg-white shadow-sm text-gray-900 border border-gray-200 transition-all">Mis Anuncios</button>
+          <button id="btn-show-all" class="px-3 py-1.5 text-xs font-bold rounded-md text-gray-500 hover:text-gray-700 transition-all">Moderación (Todo)</button>
+        </div>
+        <a href="/add" class="bg-red-600 hover:bg-red-700 text-white font-bold px-5 py-2.5 rounded-lg transition shadow-md flex items-center gap-2 text-sm">
+          <i data-lucide="plus" class="w-4 h-4"></i>
+          Nueva Publicación
+        </a>
+      </div>
     </div>
 
     <!-- Loading -->
@@ -57,6 +63,8 @@ const urlAppsScriptServer = configSnap.exists() ? configSnap.data().url_apps_scr
     import { db } from '../lib/firebase';
     import { collection, query, where, getDocs, doc, updateDoc } from 'firebase/firestore';
 
+    let moderationMode = false;
+
     const getAppsScriptUrl = () => {
       const el = document.getElementById('urlAppsScriptServer');
       return (el && 'value' in el ? el.value : null) || "https://script.google.com/macros/s/AKfycbzOu94N3mG5P7Z6jknzEnqtL1aDTKesxJ8jX2VgAdHw0doUeRdhr5X5O48COhhIcPy66g/exec";
@@ -75,7 +83,7 @@ const urlAppsScriptServer = configSnap.exists() ? configSnap.data().url_apps_scr
       const estadoVacio  = document.getElementById('estadoVacio');
       const grid         = document.getElementById('gridPublicaciones');
       const userEmail    = (localStorage.getItem('userEmail') || "").trim().toLowerCase();
-      const ADMIN_EMAILS = ['autosya.co@gmail.com', 'autosyacucuta@gmail.com'];
+      const ADMIN_EMAILS = ['autosya.co@gmail.com', 'autosyacucuta@gmail.com', 'jjpr79@gmail.com'];
       const isAdmin      = (localStorage.getItem('isAdmin') === 'true') || ADMIN_EMAILS.includes(userEmail);
 
       const debugEl     = document.getElementById('user-debug');
@@ -83,18 +91,22 @@ const urlAppsScriptServer = configSnap.exists() ? configSnap.data().url_apps_scr
         debugEl.innerHTML = `<span class="text-xs bg-gray-100 px-2 py-1 rounded border border-gray-200">Email activo: <b>${userEmail || "No identificado"}</b></span>`;
       }
 
+      const adminControls = document.getElementById('admin-controls');
+      if (isAdmin && adminControls) adminControls.classList.remove('hidden');
+
       try {
         const q = query(collection(db, "toyotausados"));
         const snapshot = await getDocs(q);
-        const results = snapshot.docs.map(doc => ({ firebaseDocId: doc.id, ...doc.data() }));
+        const results = snapshot.docs.map(doc => ({ 
+          firebaseDocId: doc.id, 
+          ...doc.data(),
+          // Normalizar campos de usuario para facilitar filtrado
+          normalizedUser: (doc.data().usuario || doc.data().Usuario || doc.data().user_email || "").toString().toLowerCase().trim()
+        }));
         
         let filteredResults = results;
-        if (!isAdmin) {
-          filteredResults = results.filter(c => {
-            const emailInDoc = (c.usuario || c.Usuario || c.user_email || "").toString().toLowerCase().trim();
-            const emailLogin = userEmail.toLowerCase().trim();
-            return emailInDoc === emailLogin;
-          });
+        if (!isAdmin || !moderationMode) {
+          filteredResults = results.filter(c => c.normalizedUser === userEmail);
         }
 
         // Ordenar por ID descendente
@@ -240,6 +252,30 @@ const urlAppsScriptServer = configSnap.exists() ? configSnap.data().url_apps_scr
       });
     }
 
+    // Toggle de Moderación
+    document.getElementById('btn-show-mine').onclick = () => {
+      moderationMode = false;
+      actualizarEstilosToggle();
+      cargarPublicaciones();
+    };
+    document.getElementById('btn-show-all').onclick = () => {
+      moderationMode = true;
+      actualizarEstilosToggle();
+      cargarPublicaciones();
+    };
+
+    function actualizarEstilosToggle() {
+      const btnMine = document.getElementById('btn-show-mine');
+      const btnAll = document.getElementById('btn-show-all');
+      if (moderationMode) {
+        btnAll.className = 'px-3 py-1.5 text-xs font-bold rounded-md bg-white shadow-sm text-gray-900 border border-gray-200 transition-all';
+        btnMine.className = 'px-3 py-1.5 text-xs font-bold rounded-md text-gray-500 hover:text-gray-700 transition-all';
+      } else {
+        btnMine.className = 'px-3 py-1.5 text-xs font-bold rounded-md bg-white shadow-sm text-gray-900 border border-gray-200 transition-all';
+        btnAll.className = 'px-3 py-1.5 text-xs font-bold rounded-md text-gray-500 hover:text-gray-700 transition-all';
+      }
+    }
+
     async function aprobarPublicacion(firebaseId, titulo, btn) {
       if (!confirm(`¿Deseas publicar "${titulo}" ahora?\n\nSerá visible inmediatamente en el catálogo.`)) return;
 
@@ -249,7 +285,16 @@ const urlAppsScriptServer = configSnap.exists() ? configSnap.data().url_apps_scr
 
       try {
         const docRef = doc(db, "toyotausados", firebaseId);
-        await updateDoc(docRef, { publicado: true });
+        const updateData = { publicado: true };
+
+        // Auto-reclamar si no tiene dueño
+        const currentDoc = filteredResults.find(c => c.firebaseDocId === firebaseId);
+        if (currentDoc && !currentDoc.normalizedUser) {
+           updateData.usuario = userEmail;
+           console.log("Auto-asignando usuario al aprobar huérfano.");
+        }
+
+        await updateDoc(docRef, updateData);
         
         alert('✓ ¡Vehículo publicado con éxito!');
         // Recargar la lista para reflejar cambios
