@@ -5,7 +5,14 @@ import { db } from '../lib/firebase';
 import { doc, getDoc } from 'firebase/firestore';
 
 const configSnap = await getDoc(doc(db, "configuracion", "negocio"));
-const urlAppsScriptServer = configSnap.exists() ? configSnap.data().url_apps_script : "";
+const config = configSnap.exists() ? configSnap.data() : {};
+const urlAppsScriptServer = config.url_apps_script || "";
+const wmConfig = {
+  url: config.watermark_url || '/marca_de_agua_toyota_rojo.jpeg',
+  scale: config.watermark_scale || 1.0,
+  opacity: config.watermark_opacity || 1.0,
+  bottom: config.watermark_bottom || 0
+};
 ---
 
 <Layout title="Añadir Toyota | Toyota Usados">
@@ -109,7 +116,7 @@ const urlAppsScriptServer = configSnap.exists() ? configSnap.data().url_apps_scr
     </form>
   </div>
 
-  <script is:inline define:vars={{ urlAppsScriptServer }}>
+  <script is:inline define:vars={{ urlAppsScriptServer, wmConfig }}>
     const URL_APPS_SCRIPT = urlAppsScriptServer || "https://script.google.com/macros/s/AKfycbzOu94N3mG5P7Z6jknzEnqtL1aDTKesxJ8jX2VgAdHw0doUeRdhr5X5O48COhhIcPy66g/exec";
     const URL_CSV_GOOGLE_SHEET = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQUXSBa4HqBFoaoXLVQW8Pvh7BRTfIhc3K8fz9wqBZHrE3DM1oo-A5v-5vsB74osUxNYOD5zEFA60vF/pub?gid=1038341741&single=true&output=csv";
 
@@ -226,17 +233,19 @@ const urlAppsScriptServer = configSnap.exists() ? configSnap.data().url_apps_scr
           ctx.drawImage(img, 0, 0);
 
           const wm = new Image();
-          wm.src = '/marca_de_agua_toyota_rojo.jpeg';
+          wm.src = wmConfig.url;
           wm.onload = () => {
-            // Marca de agua al 100% del ancho de la imagen principal
-            const wmWidth = canvas.width;
+            // Marca de agua proporcional al ancho configurado
+            const wmWidth = canvas.width * wmConfig.scale;
             const wmHeight = (wm.height * wmWidth) / wm.width;
 
-            // Posición: Centrada y sin espacio en el fondo (0px offset)
-            const x = 0;
-            const y = canvas.height - wmHeight;
+            // Posición: Centrada y con margen configurable
+            const x = (canvas.width - wmWidth) / 2;
+            const y = canvas.height - wmHeight - wmConfig.bottom;
 
+            ctx.globalAlpha = wmConfig.opacity;
             ctx.drawImage(wm, x, y, wmWidth, wmHeight);
+            ctx.globalAlpha = 1.0;
             
             resolve({ 
               base64: canvas.toDataURL('image/jpeg', 0.9), // Alta calidad
