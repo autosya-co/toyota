@@ -1,11 +1,17 @@
 ---
+import { db } from '../lib/firebase';
+import { doc, getDoc } from 'firebase/firestore';
+
+const configSnap = await getDoc(doc(db, "configuracion", "negocio"));
+const config = configSnap.exists() ? configSnap.data() : {};
+const logoUrl = config.logo || "https://lh3.googleusercontent.com/d/12qF7M3gjzCyPvlgbNO08NKxMcTCBnfuR";
 ---
 
 <nav class="bg-white shadow relative z-50">
   <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2 flex justify-between items-center bg-white relative z-50">
     <!-- Logo -->
     <a href="/" class="hover:opacity-80 transition flex-shrink-0">
-      <img src="https://lh3.googleusercontent.com/d/11WeKEM19rGyJQtjtyTFRDK_Y26QeYBSy" alt="Toyota Usados Logo" class="h-14 w-auto object-contain max-w-[60vw] md:max-w-none" />
+      <img src={logoUrl} alt="Toyota Usados Logo" class="h-14 w-auto object-contain max-w-[60vw] md:max-w-none" />
     </a>
 
     <!-- Main Navigation (Desktop) -->
