@@ -287,13 +287,16 @@ const urlAppsScriptServer = configSnap.exists() ? configSnap.data().url_apps_scr
             ctx.drawImage(img, 0, 0);
 
             const wm = new Image();
-            wm.src = '/marca_de_agua_toyota.jpeg';
-            wm.crossOrigin = 'anonymous'; // Por seguridad aunque sea local
+            wm.src = '/marca_de_agua_toyota_rojo.jpeg';
             wm.onload = () => {
-              const wmWidth = canvas.width * 0.5;
+              // Marca de agua al 100% del ancho de la imagen principal
+              const wmWidth = canvas.width;
               const wmHeight = (wm.height * wmWidth) / wm.width;
-              const x = (canvas.width - wmWidth) / 2;
-              const y = canvas.height - wmHeight - 3;
+
+              // Posición: Centrada y sin espacio en el fondo (0px offset)
+              const x = 0;
+              const y = canvas.height - wmHeight;
+
               ctx.drawImage(wm, x, y, wmWidth, wmHeight);
               resolve({ 
                 base64: canvas.toDataURL('image/jpeg', 0.9), 
