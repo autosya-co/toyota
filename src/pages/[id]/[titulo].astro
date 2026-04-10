@@ -198,7 +198,7 @@ try {
               <a href={`/edit?id=${carro.ID}`} 
                  id="editButton" 
                  class="hidden items-center gap-2 px-4 py-2 bg-amber-50 hover:bg-amber-100 text-amber-700 border border-amber-200 rounded-xl text-xs font-black uppercase tracking-wider transition-all shadow-sm hover:shadow-md transform hover:-translate-y-0.5"
-                 data-author={carro.usuario || carro.Usuario || carro.user_email || ""}>
+                 data-author={carro.usuario || carro.Usuario || carro.user_email || carro['correo usuario'] || carro['correo_usuario'] || carro.correo || ""}>
                 <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></svg>
                 <span>Editar</span>
               </a>

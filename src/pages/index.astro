@@ -229,7 +229,8 @@ try {
           const userEmail = typeof localStorage !== 'undefined' ? localStorage.getItem('userEmail') : null;
           const isAdmin = typeof localStorage !== 'undefined' ? localStorage.getItem('isAdmin') === 'true' : false;
           
-          if (isAdmin || (userEmail && carro.usuario === userEmail)) {
+          const authorEmail = (carro.usuario || carro.Usuario || carro.user_email || carro['correo usuario'] || carro['correo_usuario'] || carro.correo || "").toString().toLowerCase().trim();
+          if (isAdmin || (userEmail && authorEmail === userEmail)) {
              botonEditarHTML = `
                <a href="/edit?id=${carro.ID}" class="px-3 bg-amber-100 hover:bg-amber-200 text-amber-800 rounded flex items-center justify-center transition" title="Editar Vehículo">
                  <i data-lucide="pencil" class="w-4 h-4"></i>

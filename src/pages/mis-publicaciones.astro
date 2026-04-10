@@ -1,12 +1,23 @@
----
 export const prerender = false;
 import Layout from '../layouts/Layout.astro';
 import Navbar from '../components/Navbar.astro';
 import { db } from '../lib/firebase';
-import { doc, getDoc } from 'firebase/firestore';
+import { collection, getDocs, doc, getDoc } from 'firebase/firestore';
 
 const configSnap = await getDoc(doc(db, "configuracion", "negocio"));
 const urlAppsScriptServer = configSnap.exists() ? configSnap.data().url_apps_script : "";
+
+// Fetch all publications in SSR for more reliable filtering
+let allFirebaseData = [];
+try {
+  const snapshot = await getDocs(collection(db, 'toyotausados'));
+  allFirebaseData = snapshot.docs.map(doc => ({ 
+    firebaseDocId: doc.id, 
+    ...doc.data() 
+  }));
+} catch (e) {
+  console.error("Error fetching publications in SSR:", e);
+}
 ---
 
 <Layout title="Mis Publicaciones">
@@ -55,6 +66,7 @@ const urlAppsScriptServer = configSnap.exists() ? configSnap.data().url_apps_scr
     <!-- Grid de publicaciones -->
     <div id="gridPublicaciones" class="hidden grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"></div>
     <input type="hidden" id="urlAppsScriptServer" value={urlAppsScriptServer} />
+    <script id="all-publications-data" type="application/json" set:html={JSON.stringify(allFirebaseData)}></script>
 
   <script>
     import { db } from '../lib/firebase';
@@ -89,46 +101,35 @@ const urlAppsScriptServer = configSnap.exists() ? configSnap.data().url_apps_scr
 
 
       try {
+        const rawJsonStr = document.getElementById('all-publications-data').textContent;
+        const allData = rawJsonStr ? JSON.parse(rawJsonStr) : [];
+        
         let results = [];
-        const colRef = collection(db, "toyotausados");
-
+        
         if (isAdmin) {
-          // Si es Admin: Traer los últimos 200 anuncios
-          const q = query(colRef, orderBy("ID", "desc"), limit(200));
-          const snapshot = await getDocs(q);
-          results = snapshot.docs.map(doc => ({ 
-            firebaseDocId: doc.id, 
-            ...doc.data(),
-            normalizedUser: (doc.data().usuario || doc.data().Usuario || doc.data().user_email || "").toString().toLowerCase().trim()
-          }));
+          // Si es Admin: Mostrar todo
+          results = allData;
         } else {
-          // Modo Usuario normal: Buscar solo sus propios anuncios (OR simulado con 3 consultas)
-          console.log("Cargando anuncios para:", userEmail);
+          // Si es Usuario normal: Filtrar por cualquier variante de campo de correo
           if (!userEmail) throw new Error("No se identificó el correo del usuario.");
           
-          const q1 = query(colRef, where("usuario", "==", userEmail));
-          const q2 = query(colRef, where("Usuario", "==", userEmail));
-          const q3 = query(colRef, where("user_email", "==", userEmail));
-          
-          const [s1, s2, s3] = await Promise.all([getDocs(q1), getDocs(q2), getDocs(q3)]);
-          
-          const allDocs = [...s1.docs, ...s2.docs, ...s3.docs];
-          console.log("Documentos crudos encontrados:", allDocs.length);
-          
-          // Eliminar duplicados por ID de documento
-          const seenIds = new Set();
-          results = allDocs.reduce((acc, doc) => {
-            if (!seenIds.has(doc.id)) {
-              seenIds.add(doc.id);
-              acc.push({ 
-                firebaseDocId: doc.id, 
-                ...doc.data(),
-                normalizedUser: userEmail
-              });
-            }
-            return acc;
-          }, []);
+          results = allData.filter(doc => {
+            const fieldsToTry = [
+                doc.usuario, 
+                doc.Usuario, 
+                doc.user_email, 
+                doc['correo usuario'], 
+                doc['correo_usuario'],
+                doc.correo
+            ];
+            
+            return fieldsToTry.some(f => 
+                f && f.toString().toLowerCase().trim() === userEmail
+            );
+          });
         }
+        
+        console.log("Resultados procesados por filtro dinámico:", results.length);
         
         console.log("Resultados procesados:", results.length, results);
         globalResults = results;
