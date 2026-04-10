@@ -114,18 +114,10 @@ try {
           if (!userEmail) throw new Error("No se identificó el correo del usuario.");
           
           results = allData.filter(doc => {
-            const fieldsToTry = [
-                doc.usuario, 
-                doc.Usuario, 
-                doc.user_email, 
-                doc['correo usuario'], 
-                doc['correo_usuario'],
-                doc.correo
-            ];
-            
-            return fieldsToTry.some(f => 
-                f && f.toString().toLowerCase().trim() === userEmail
-            );
+            // El nuevo estándar es 'usuario' (todo en minúsculas)
+            // Mantenemos fallback para campos antiguos solo por compatibilidad de lectura
+            const userFieldValue = (doc.usuario || doc.Usuario || doc.user_email || doc['correo usuario'] || doc['correo_usuario'] || doc.correo || "").toString().toLowerCase().trim();
+            return userFieldValue === userEmail;
           });
         }
         
