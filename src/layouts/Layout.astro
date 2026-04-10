@@ -71,9 +71,16 @@ const { title } = Astro.props;
 					} else {
 						localStorage.removeItem('isAdmin');
 					}
-					
-					// Notificamos a la aplicación que se actualizó la sesión
-					window.location.reload();
+
+					// Persistimos en Firestore (llamada a función global definida en script de módulo)
+					if (window.saveUserToFirestore) {
+						window.saveUserToFirestore(payload).then(() => {
+							window.location.reload();
+						});
+					} else {
+						// Fallback si el script del módulo no ha cargado (poco probable por el defer, pero por seguridad)
+						window.location.reload();
+					}
 				} catch(e) {
 					console.error("Error decodificando JWT:", e);
 				}
@@ -94,6 +101,7 @@ const { title } = Astro.props;
 				}
 			};
 
+
 			window.addEventListener('load', function() {
 				const checkGoogle = setInterval(() => {
 					if (window.google && window.google.accounts) {
@@ -102,6 +110,26 @@ const { title } = Astro.props;
 					}
 				}, 100);
 			});
+		</script>
+
+		<script>
+			import { db } from '../lib/firebase';
+			import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
+
+			// Exponemos la función al objeto window para que el script inline de Auth pueda llamarla
+			window.saveUserToFirestore = async (payload) => {
+				try {
+					const userRef = doc(db, 'usuarios', payload.email.toLowerCase().trim());
+					await setDoc(userRef, {
+						nombre: payload.name || payload.email.split('@')[0],
+						email: payload.email.toLowerCase().trim(),
+						foto: payload.picture || null,
+						ultimoAcceso: serverTimestamp()
+					}, { merge: true });
+				} catch (e) {
+					console.error("Error guardando usuario en Firestore:", e);
+				}
+			};
 		</script>
 		<style is:inline>
 			/* Clases utilitarias para elementos de administrador */

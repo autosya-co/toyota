@@ -88,65 +88,81 @@ import Navbar from '../../components/Navbar.astro';
     </div>
   </div>
 
-  <script is:inline>
-    const URL_CSV = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQUXSBa4HqBFoaoXLVQW8Pvh7BRTfIhc3K8fz9wqBZHrE3DM1oo-A5v-5vsB74osUxNYOD5zEFA60vF/pub?gid=1038341741&single=true&output=csv";
+  <script>
+    import { db } from '../../lib/firebase';
+    import { collection, getDocs, query, orderBy } from 'firebase/firestore';
+
     const ADMIN_EMAILS = ['autosya.co@gmail.com', 'autosyacucuta@gmail.com', 'jjpr79@gmail.com'];
     let todosUsuarios = [];
 
-    Papa.parse(URL_CSV, {
-      download: true, header: true,
-      complete(results) {
-        const mapa = {};
-        results.data.forEach(c => {
-          if (!c.usuario || !c.usuario.includes('@')) return;
-          if (!mapa[c.usuario]) mapa[c.usuario] = { email: c.usuario, publicaciones: 0 };
-          mapa[c.usuario].publicaciones++;
-        });
+    async function cargarUsuarios() {
+      try {
+        const q = query(collection(db, "usuarios"), orderBy("ultimoAcceso", "desc"));
+        const snapshot = await getDocs(q);
+        
+        todosUsuarios = snapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        }));
 
-        todosUsuarios = Object.values(mapa).sort((a, b) => b.publicaciones - a.publicaciones);
+        const loadingEl = document.getElementById('loading');
+        if (loadingEl) loadingEl.classList.add('hidden');
 
-        document.getElementById('loading').classList.add('hidden');
         if (todosUsuarios.length === 0) {
-          document.getElementById('estadoVacio').classList.remove('hidden');
+          const vacioEl = document.getElementById('estadoVacio');
+          if (vacioEl) vacioEl.classList.remove('hidden');
+          // @ts-ignore
           if (window.lucide) window.lucide.createIcons();
           return;
         }
 
         renderTabla(todosUsuarios);
-        document.getElementById('totalUsuarios').textContent = todosUsuarios.length;
-        document.getElementById('tablaContainer').classList.remove('hidden');
+        const totalEl = document.getElementById('totalUsuarios');
+        if (totalEl) totalEl.textContent = todosUsuarios.length.toString();
+        
+        const containerEl = document.getElementById('tablaContainer');
+        if (containerEl) containerEl.classList.remove('hidden');
+        // @ts-ignore
         if (window.lucide) window.lucide.createIcons();
-      },
-      error() {
-        document.getElementById('loading').innerHTML = '<p class="text-red-500 font-bold text-center py-10">Error al cargar datos</p>';
+      } catch (error) {
+        console.error("Error cargando usuarios:", error);
+        const loadingEl = document.getElementById('loading');
+        if (loadingEl) loadingEl.innerHTML = '<p class="text-red-500 font-bold text-center py-10">Error al cargar datos de Firestore</p>';
       }
-    });
+    }
 
     function renderTabla(lista) {
       const tbody = document.getElementById('tbodyUsuarios');
+      if (!tbody) return;
       tbody.innerHTML = '';
+      
       lista.forEach(u => {
         const esAdmin = ADMIN_EMAILS.includes(u.email);
-        const iniciales = u.email.slice(0,2).toUpperCase();
+        const iniciales = u.nombre ? u.nombre.slice(0,2).toUpperCase() : u.email.slice(0,2).toUpperCase();
+        const fecha = u.ultimoAcceso?.toDate ? u.ultimoAcceso.toDate().toLocaleDateString() : 'N/A';
+        
         tbody.insertAdjacentHTML('beforeend', `
           <tr class="hover:bg-gray-50 transition">
             <td class="px-6 py-4">
               <div class="flex items-center gap-3">
-                <div class="w-9 h-9 rounded-full bg-indigo-100 text-indigo-700 flex items-center justify-center font-bold text-sm flex-shrink-0">${iniciales}</div>
+                ${u.foto 
+                  ? `<img src="${u.foto}" class="w-9 h-9 rounded-full object-cover border border-gray-100" referrerpolicy="no-referrer">`
+                  : `<div class="w-9 h-9 rounded-full bg-indigo-100 text-indigo-700 flex items-center justify-center font-bold text-sm flex-shrink-0">${iniciales}</div>`
+                }
                 <div>
-                  <p class="font-semibold text-gray-900 text-sm">${u.email}</p>
-                  ${esAdmin ? '<span class="text-[10px] bg-red-100 text-red-700 px-2 py-0.5 rounded-full font-bold uppercase">Admin</span>' : ''}
+                  <p class="font-semibold text-gray-900 text-sm">${u.nombre || 'Usuario sin nombre'}</p>
+                  <p class="text-xs text-gray-500">${u.email}</p>
                 </div>
               </div>
             </td>
             <td class="px-6 py-4 hidden md:table-cell">
-              <span class="bg-gray-100 text-gray-700 px-2 py-1 rounded-lg text-xs font-bold">${u.publicaciones} vehículo${u.publicaciones !== 1 ? 's' : ''}</span>
+              <span class="text-gray-600 text-xs">${fecha}</span>
             </td>
             <td class="px-6 py-4 hidden md:table-cell">
               <span class="px-3 py-1 rounded-full text-xs font-bold ${esAdmin ? 'bg-red-100 text-red-700' : 'bg-gray-100 text-gray-600'}">${esAdmin ? 'Administrador' : 'Usuario'}</span>
             </td>
             <td class="px-6 py-4 text-right">
-              <a href="https://wa.me/${encodeURIComponent(u.email.includes('+57') ? '' : '57')}?text=${encodeURIComponent('Hola, te contactamos desde Toyota Usados.')}"
+              <a href="https://wa.me/${encodeURIComponent(u.email.includes('+57') ? '' : '57')}?text=${encodeURIComponent('Hola ' + (u.nombre || '') + ', te contactamos desde Toyota Usados.')}"
                 target="_blank"
                 class="inline-flex items-center gap-1.5 text-xs bg-green-50 hover:bg-green-100 text-green-700 font-bold px-3 py-1.5 rounded-lg transition">
                 <i data-lucide="message-circle" class="w-3.5 h-3.5"></i>
@@ -156,35 +172,55 @@ import Navbar from '../../components/Navbar.astro';
           </tr>
         `);
       });
+      // @ts-ignore
       if (window.lucide) window.lucide.createIcons();
     }
 
-    document.getElementById('buscarUsuario')?.addEventListener('input', function() {
-      const q = this.value.toLowerCase();
-      const filtrados = todosUsuarios.filter(u => u.email.toLowerCase().includes(q));
+    // Inicializar carga
+    cargarUsuarios();
+
+    // Buscador
+    document.getElementById('buscarUsuario')?.addEventListener('input', (e) => {
+      const q = (e.target as HTMLInputElement).value.toLowerCase();
+      const filtrados = todosUsuarios.filter(u => 
+        u.email.toLowerCase().includes(q) || 
+        (u.nombre && u.nombre.toLowerCase().includes(q))
+      );
       renderTabla(filtrados);
-      document.getElementById('totalUsuarios').textContent = filtrados.length;
+      const totalEl = document.getElementById('totalUsuarios');
+      if (totalEl) totalEl.textContent = filtrados.length.toString();
     });
 
+    // Funciones de Modal masivo (exponemos a window)
+    // @ts-ignore
     window.abrirMensajeMasivo = function() {
       const modal = document.getElementById('modalMensaje');
-      modal.classList.remove('hidden');
-      modal.classList.add('flex');
-      if (window.lucide) window.lucide.createIcons();
+      if (modal) {
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+        // @ts-ignore
+        if (window.lucide) window.lucide.createIcons();
+      }
     };
 
+    // @ts-ignore
     window.cerrarMensajeMasivo = function() {
       const modal = document.getElementById('modalMensaje');
-      modal.classList.add('hidden');
-      modal.classList.remove('flex');
+      if (modal) {
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+      }
     };
 
+    // @ts-ignore
     window.enviarMensajeMasivo = function() {
-      const msg = document.getElementById('textoMasivo').value.trim();
+      const msgEl = document.getElementById('textoMasivo') as HTMLTextAreaElement;
+      const msg = msgEl?.value.trim();
       if (!msg) { alert('Escribe un mensaje.'); return; }
       const tel = '573202832616';
       const url = `https://wa.me/${tel}?text=${encodeURIComponent(msg)}`;
       window.open(url, '_blank');
+      // @ts-ignore
       cerrarMensajeMasivo();
     };
   </script>
