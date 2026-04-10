@@ -22,13 +22,10 @@ const urlAppsScriptServer = configSnap.exists() ? configSnap.data().url_apps_scr
     <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-8 gap-4">
       <div>
         <h1 class="text-3xl font-extrabold text-gray-900">Mis Publicaciones</h1>
-        <p id="user-debug" class="text-gray-500 mt-1 text-sm">Administra los vehículos que has publicado</p>
+        <p id="user-debug" class="text-gray-500 mt-1 text-sm">Gestiona el catálogo de vehículos publicados</p>
       </div>
       <div class="flex gap-2">
-        <div id="admin-controls" class="hidden flex bg-gray-100 p-1 rounded-lg border border-gray-200 mr-2">
-          <button id="btn-show-mine" class="px-3 py-1.5 text-xs font-bold rounded-md bg-white shadow-sm text-gray-900 border border-gray-200 transition-all">Mis Anuncios</button>
-          <button id="btn-show-all" class="px-3 py-1.5 text-xs font-bold rounded-md text-gray-500 hover:text-gray-700 transition-all">Moderación (Todo)</button>
-        </div>
+
         <a href="/add" class="bg-red-600 hover:bg-red-700 text-white font-bold px-5 py-2.5 rounded-lg transition shadow-md flex items-center gap-2 text-sm">
           <i data-lucide="plus" class="w-4 h-4"></i>
           Nueva Publicación
@@ -63,7 +60,7 @@ const urlAppsScriptServer = configSnap.exists() ? configSnap.data().url_apps_scr
     import { db } from '../lib/firebase';
     import { collection, query, where, getDocs, doc, updateDoc, orderBy, limit } from 'firebase/firestore';
 
-    let moderationMode = false;
+
     let globalResults = [];
     const userEmail = (typeof localStorage !== 'undefined' ? (localStorage.getItem('userEmail') || "").trim().toLowerCase() : "");
     const ADMIN_EMAILS = ['autosya.co@gmail.com', 'autosyacucuta@gmail.com', 'jjpr79@gmail.com'];
@@ -89,15 +86,14 @@ const urlAppsScriptServer = configSnap.exists() ? configSnap.data().url_apps_scr
         debugEl.innerHTML = `<span class="text-xs bg-gray-100 px-2 py-1 rounded border border-gray-200">Email activo: <b>${userEmail || "No identificado"}</b></span>`;
       }
 
-      const adminControls = document.getElementById('admin-controls');
-      if (isAdmin && adminControls) adminControls.classList.remove('hidden');
+
 
       try {
         let results = [];
         const colRef = collection(db, "toyotausados");
 
-        if (isAdmin && moderationMode) {
-          // Modo Moderación: Solo traer los últimos 200 anuncios para no saturar el navegador
+        if (isAdmin) {
+          // Si es Admin: Traer los últimos 200 anuncios
           const q = query(colRef, orderBy("ID", "desc"), limit(200));
           const snapshot = await getDocs(q);
           results = snapshot.docs.map(doc => ({ 
@@ -281,29 +277,7 @@ const urlAppsScriptServer = configSnap.exists() ? configSnap.data().url_apps_scr
       });
     }
 
-    // Toggle de Moderación
-    document.getElementById('btn-show-mine').onclick = () => {
-      moderationMode = false;
-      actualizarEstilosToggle();
-      cargarPublicaciones();
-    };
-    document.getElementById('btn-show-all').onclick = () => {
-      moderationMode = true;
-      actualizarEstilosToggle();
-      cargarPublicaciones();
-    };
 
-    function actualizarEstilosToggle() {
-      const btnMine = document.getElementById('btn-show-mine');
-      const btnAll = document.getElementById('btn-show-all');
-      if (moderationMode) {
-        btnAll.className = 'px-3 py-1.5 text-xs font-bold rounded-md bg-white shadow-sm text-gray-900 border border-gray-200 transition-all';
-        btnMine.className = 'px-3 py-1.5 text-xs font-bold rounded-md text-gray-500 hover:text-gray-700 transition-all';
-      } else {
-        btnMine.className = 'px-3 py-1.5 text-xs font-bold rounded-md bg-white shadow-sm text-gray-900 border border-gray-200 transition-all';
-        btnAll.className = 'px-3 py-1.5 text-xs font-bold rounded-md text-gray-500 hover:text-gray-700 transition-all';
-      }
-    }
 
     async function aprobarPublicacion(firebaseId, titulo, btn) {
       if (!confirm(`¿Deseas publicar "${titulo}" ahora?\n\nSerá visible inmediatamente en el catálogo.`)) return;

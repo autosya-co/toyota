@@ -1,4 +1,13 @@
 ---
+import { db } from '../lib/firebase';
+import { doc, getDoc } from 'firebase/firestore';
+
+const configSnap = await getDoc(doc(db, "configuracion", "negocio"));
+const config = configSnap.exists() ? configSnap.data() : {};
+
+const whatsappNumber = config.whatsapp || "573202832616";
+const phoneNumber = config.telefono || "3202832616";
+const address = config.direccion || "Calle 11A # 1E - 29 Caobos";
 ---
 
 <footer class="bg-white border-t border-gray-100 pt-16 pb-8 relative overflow-hidden mt-20">
@@ -30,17 +39,28 @@
           <h3 class="text-xl font-bold text-gray-900 tracking-tight uppercase">Nuestras Redes</h3>
         </div>
         <div class="flex justify-center md:justify-start gap-4">
-          <a href="#" class="w-12 h-12 rounded-xl bg-gray-50 flex items-center justify-center text-gray-600 hover:bg-red-600 hover:text-white hover:-translate-y-1 transition-all duration-300 shadow-sm border border-gray-100">
-            <i data-lucide="facebook" class="w-5 h-5"></i>
-          </a>
-          <a href="#" class="w-12 h-12 rounded-xl bg-gray-50 flex items-center justify-center text-gray-600 hover:bg-pink-600 hover:text-white hover:-translate-y-1 transition-all duration-300 shadow-sm border border-gray-100">
-            <i data-lucide="instagram" class="w-5 h-5"></i>
-          </a>
-          <a href="https://wa.me/573202832616?text=Hola,%20vengo%20de%20toyotausados.com" target="_blank" class="w-12 h-12 rounded-xl bg-gray-50 flex items-center justify-center text-gray-600 hover:bg-green-500 hover:text-white hover:-translate-y-1 transition-all duration-300 shadow-sm border border-gray-100">
+          {config.facebook && (
+            <a href={config.facebook} target="_blank" class="w-12 h-12 rounded-xl bg-gray-50 flex items-center justify-center text-gray-600 hover:bg-red-600 hover:text-white hover:-translate-y-1 transition-all duration-300 shadow-sm border border-gray-100">
+              <i data-lucide="facebook" class="w-5 h-5"></i>
+            </a>
+          )}
+          {config.instagram && (
+            <a href={config.instagram} target="_blank" class="w-12 h-12 rounded-xl bg-gray-50 flex items-center justify-center text-gray-600 hover:bg-pink-600 hover:text-white hover:-translate-y-1 transition-all duration-300 shadow-sm border border-gray-100">
+              <i data-lucide="instagram" class="w-5 h-5"></i>
+            </a>
+          )}
+          {config.youtube && (
+            <a href={config.youtube} target="_blank" class="w-12 h-12 rounded-xl bg-gray-50 flex items-center justify-center text-gray-600 hover:bg-red-700 hover:text-white hover:-translate-y-1 transition-all duration-300 shadow-sm border border-gray-100">
+              <i data-lucide="youtube" class="w-5 h-5"></i>
+            </a>
+          )}
+          {config.tiktok && (
+            <a href={config.tiktok} target="_blank" class="w-12 h-12 rounded-xl bg-gray-50 flex items-center justify-center text-gray-600 hover:bg-gray-900 hover:text-white hover:-translate-y-1 transition-all duration-300 shadow-sm border border-gray-100">
+              <i data-lucide="video" class="w-5 h-5"></i>
+            </a>
+          )}
+          <a href={`https://wa.me/${whatsappNumber}?text=Hola,%20vengo%20de%20toyotausados.com`} target="_blank" class="w-12 h-12 rounded-xl bg-gray-50 flex items-center justify-center text-gray-600 hover:bg-green-500 hover:text-white hover:-translate-y-1 transition-all duration-300 shadow-sm border border-gray-100">
             <i data-lucide="message-circle" class="w-5 h-5"></i>
-          </a>
-          <a href="#" class="w-12 h-12 rounded-xl bg-gray-50 flex items-center justify-center text-gray-600 hover:bg-red-600 hover:text-white hover:-translate-y-1 transition-all duration-300 shadow-sm border border-gray-100">
-            <i data-lucide="mail" class="w-5 h-5"></i>
           </a>
         </div>
       </div>
@@ -56,12 +76,12 @@
         <ul class="space-y-4 text-gray-600 w-full">
           <li class="flex items-center justify-center md:justify-start gap-4 p-3 bg-gray-50 rounded-xl hover:bg-red-50 hover:text-red-700 transition-colors cursor-default border border-transparent hover:border-red-100">
             <i data-lucide="map-pinned" class="w-5 h-5 text-red-500"></i>
-            <span class="font-medium">Calle 11A # 1E - 29 Caobos</span>
+            <span class="font-medium">{address}</span>
           </li>
           <li>
-             <a href="tel:3202832616" class="flex items-center justify-center md:justify-start gap-4 p-3 bg-gray-50 rounded-xl hover:bg-red-50 hover:text-red-700 transition-colors border border-transparent hover:border-red-100">
+             <a href={`tel:${phoneNumber}`} class="flex items-center justify-center md:justify-start gap-4 p-3 bg-gray-50 rounded-xl hover:bg-red-50 hover:text-red-700 transition-colors border border-transparent hover:border-red-100">
                <i data-lucide="phone-call" class="w-5 h-5 text-red-500"></i>
-               <span class="font-bold">320-2832616</span>
+               <span class="font-bold">{phoneNumber}</span>
              </a>
           </li>
         </ul>
@@ -81,7 +101,7 @@
   </div>
 
   <!-- Botón Flotante WhatsApp -->
-  <a href="https://wa.me/573202832616?text=Hola,%20vengo%20de%20toyotausados.com" target="_blank" 
+  <a href={`https://wa.me/${whatsappNumber}?text=Hola,%20vengo%20de%20toyotausados.com`} target="_blank" 
      class="fixed bottom-6 right-6 z-50 bg-green-500 hover:bg-green-600 text-white p-4 rounded-full shadow-lg hover:shadow-xl hover:-translate-y-2 transition-all duration-300 flex items-center justify-center"
      title="Contáctanos por WhatsApp">
     <i data-lucide="message-circle" class="w-7 h-7"></i>
