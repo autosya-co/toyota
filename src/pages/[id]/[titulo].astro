@@ -112,16 +112,13 @@ const descripcionMeta = `${carro.Title} — ${anio}, ${formatearKm(carro.Mileage
 
                   {totalImagenes > 1 && (
                     <>
-                      <div class="absolute inset-y-0 left-0 w-16 bg-gradient-to-r from-black/20 to-transparent pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                      <div class="absolute inset-y-0 right-0 w-16 bg-gradient-to-l from-black/20 to-transparent pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                      
                       <button id="prevBtn" aria-label="Anterior"
-                        class="absolute left-3 top-1/2 -translate-y-1/2 bg-white/10 hover:bg-white/20 text-white w-12 h-12 rounded-full flex items-center justify-center transition-all z-10 backdrop-blur-md opacity-0 group-hover:opacity-100 border border-white/20">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7" /></svg>
+                        class="absolute left-3 top-1/2 -translate-y-1/2 bg-black/20 hover:bg-black/40 text-white w-9 h-9 rounded-full flex items-center justify-center transition-all z-10 backdrop-blur-sm opacity-0 group-hover:opacity-100">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" /></svg>
                       </button>
                       <button id="nextBtn" aria-label="Siguiente"
-                        class="absolute right-3 top-1/2 -translate-y-1/2 bg-white/10 hover:bg-white/20 text-white w-12 h-12 rounded-full flex items-center justify-center transition-all z-10 backdrop-blur-md opacity-0 group-hover:opacity-100 border border-white/20">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7" /></svg>
+                        class="absolute right-3 top-1/2 -translate-y-1/2 bg-black/20 hover:bg-black/40 text-white w-9 h-9 rounded-full flex items-center justify-center transition-all z-10 backdrop-blur-sm opacity-0 group-hover:opacity-100">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" /></svg>
                       </button>
                     </>
                   )}
@@ -261,11 +258,11 @@ const descripcionMeta = `${carro.Title} — ${anio}, ${formatearKm(carro.Mileage
     <!-- Main Content Area -->
     <div class="flex-grow relative w-full h-full overflow-hidden">
        <!-- Navigation Buttons (Z-110) -->
-       <button id="lbPrev" class="absolute left-4 top-1/2 -translate-y-1/2 bg-black/40 hover:bg-black/60 text-white w-14 h-14 rounded-full flex items-center justify-center transition-all z-[110] backdrop-blur-md border border-white/10 group pointer-events-auto">
-         <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 transition-transform group-hover:-translate-x-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M15 19l-7-7 7-7" /></svg>
+       <button id="lbPrev" class="absolute left-4 top-1/2 -translate-y-1/2 bg-black/30 hover:bg-black/50 text-white w-10 h-10 rounded-full flex items-center justify-center transition-all z-[110] backdrop-blur-sm border border-white/10 group pointer-events-auto">
+         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 transition-transform group-hover:-translate-x-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" /></svg>
        </button>
-       <button id="lbNext" class="absolute right-4 top-1/2 -translate-y-1/2 bg-black/40 hover:bg-black/60 text-white w-14 h-14 rounded-full flex items-center justify-center transition-all z-[110] backdrop-blur-md border border-white/10 group pointer-events-auto">
-         <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 transition-transform group-hover:translate-x-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M9 5l7 7-7 7" /></svg>
+       <button id="lbNext" class="absolute right-4 top-1/2 -translate-y-1/2 bg-black/30 hover:bg-black/50 text-white w-10 h-10 rounded-full flex items-center justify-center transition-all z-[110] backdrop-blur-sm border border-white/10 group pointer-events-auto">
+         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 transition-transform group-hover:translate-x-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" /></svg>
        </button>
 
        <!-- Track -->

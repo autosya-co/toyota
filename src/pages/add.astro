@@ -241,10 +241,19 @@ const wmConfig = {
           const canvas = document.createElement('canvas');
           const ctx = canvas.getContext('2d');
           
-          // Mantener máxima calidad
-          canvas.width = img.width;
-          canvas.height = img.height;
-          ctx.drawImage(img, 0, 0);
+          // Optimización: Redimensionar si la imagen es muy grande (máx 1200px)
+          const MAX_WIDTH = 1200;
+          let width = img.width;
+          let height = img.height;
+
+          if (width > MAX_WIDTH) {
+            height *= MAX_WIDTH / width;
+            width = MAX_WIDTH;
+          }
+
+          canvas.width = width;
+          canvas.height = height;
+          ctx.drawImage(img, 0, 0, width, height);
 
           const wm = new Image();
           wm.src = wmConfig.url;
@@ -262,7 +271,7 @@ const wmConfig = {
             ctx.globalAlpha = 1.0;
             
             resolve({ 
-              base64: canvas.toDataURL('image/jpeg', 0.9), // Alta calidad
+              base64: canvas.toDataURL('image/jpeg', 0.7), // Calidad optimizada para web
               nombre: file.name, 
               tipo: 'image/jpeg'
             });
