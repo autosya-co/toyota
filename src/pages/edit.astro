@@ -372,6 +372,9 @@ const wmConfig = {
           }));
           const imagenesFiltradas = imagenesProcesadas.filter(Boolean);
           
+          const ADMIN_EMAILS = ['autosya.co@gmail.com', 'autosyacucuta@gmail.com', 'jjpr79@gmail.com'];
+          const isAdmin = (localStorage.getItem('isAdmin') === 'true') || ADMIN_EMAILS.includes((localStorage.getItem('userEmail') || "").trim().toLowerCase());
+
           const payload = {
             accion: "editar",
             idSecuencial: document.getElementById('idSecuencial').value,
@@ -382,7 +385,8 @@ const wmConfig = {
             digitoPlaca: document.getElementById('digitoPlaca').value, ciudadPlaca: document.getElementById('ciudadPlaca').value, nacionalidad: document.getElementById('nacionalidad').value, tipo: document.getElementById('tipo').value,
             dueno: document.getElementById('dueno').value, contenido: document.getElementById('contenido').value,
             imagenesOrdenadas: imagenesFiltradas,
-            usuario: (localStorage.getItem('userEmail') || "usuario_desconocido").trim().toLowerCase()
+            usuario: (localStorage.getItem('userEmail') || "usuario_desconocido").trim().toLowerCase(),
+            publicado: isAdmin
           };
 
           const respuesta = await fetch(URL_APPS_SCRIPT, { method: 'POST', body: JSON.stringify(payload) });
