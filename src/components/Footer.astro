@@ -8,6 +8,22 @@ const config = configSnap.exists() ? configSnap.data() : {};
 const whatsappNumber = config.whatsapp || "573202832616";
 const phoneNumber = config.telefono || "3202832616";
 const address = config.direccion || "Calle 11A # 1E - 29 Caobos";
+
+// Lógica de Pico y Placa Cúcuta
+const fechaBogota = new Date(new Date().toLocaleString("en-US", {timeZone: "America/Bogota"}));
+const diaSemana = fechaBogota.getDay(); // 0: Domingo, 1: Lunes...
+
+const reglasPicoYPlaca = {
+  1: "1 y 2",
+  2: "3 y 4",
+  3: "5 y 6",
+  4: "7 y 8",
+  5: "9 y 0"
+};
+
+const textoPicoYPlaca = reglasPicoYPlaca[diaSemana] 
+  ? `Hoy: ${reglasPicoYPlaca[diaSemana]}` 
+  : "Hoy no hay pico y placa";
 ---
 
 <footer class="bg-white border-t border-gray-100 pt-16 pb-8 relative overflow-hidden mt-20">
@@ -26,7 +42,7 @@ const address = config.direccion || "Calle 11A # 1E - 29 Caobos";
           <h3 class="text-xl font-bold text-gray-900 tracking-tight uppercase">Pico y Placa</h3>
         </div>
         <div class="bg-gray-50 border border-gray-100 px-6 py-4 rounded-xl w-full text-center md:text-left hover:border-red-200 hover:bg-white hover:shadow-md transition-all">
-          <p class="text-gray-600 font-medium">Hoy no hay pico y placa</p>
+          <p class="text-gray-600 font-bold text-lg">{textoPicoYPlaca}</p>
         </div>
       </div>
 
