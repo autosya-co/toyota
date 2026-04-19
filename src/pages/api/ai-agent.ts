@@ -1,5 +1,5 @@
 import type { APIRoute } from 'astro';
-import { VertexAI } from '@google-cloud/vertexai';
+import { GoogleGenerativeAI } from '@google/generative-ai';
 import { getFileContent, updateFileContent } from '../../lib/github';
 
 export const POST: APIRoute = async ({ request }) => {
@@ -16,18 +16,18 @@ export const POST: APIRoute = async ({ request }) => {
     // 1. Obtener contenido actual
     const { content, sha } = await getFileContent(filePath);
 
-    // 2. Configuración dinámica para depuración
-    const project = config?.projectId || import.meta.env.VERTEX_AI_PROJECT || 'toyotausados';
-    const location = config?.location || import.meta.env.VERTEX_AI_LOCATION || 'us-central1';
-    const modelId = config?.modelId || 'gemini-1.5-flash-001';
+    // 2. Configuración para Google AI Studio (Gemini API)
+    const apiKey = config?.apiKey || import.meta.env.GEMINI_API_KEY;
     
-    console.log(`[AI-Agent] Solicitud: Proyecto=${project}, Loc=${location}, Modelo=${modelId}`);
+    if (!apiKey) {
+      return new Response(JSON.stringify({ error: 'Falta GEMINI_API_KEY' }), {
+        status: 401,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    }
 
-    const vertexAI = new VertexAI({ project: project, location: location });
-
-    const generativeModel = vertexAI.getGenerativeModel({
-      model: modelId,
-    });
+    const genAI = new GoogleGenerativeAI(apiKey);
+    const model = genAI.getGenerativeModel({ model: config?.modelId || "gemini-1.5-flash" });
 
     const fullPrompt = `
       Eres un Agente Constructor experto en Astro 6 y Tailwind CSS 4.
@@ -48,18 +48,9 @@ export const POST: APIRoute = async ({ request }) => {
       4. Si la instrucción no es clara o no se puede realizar, retorna el código original sin cambios.
     `;
 
-    const requestPayload = {
-      contents: [{ role: 'user', parts: [{ text: fullPrompt }] }],
-    };
-
-    const result = await generativeModel.generateContent(requestPayload);
-    const response = result.response;
-    
-    if (!response.candidates || response.candidates.length === 0 || !response.candidates[0].content.parts[0].text) {
-      throw new Error('La IA no generó una respuesta válida');
-    }
-
-    const generatedCode = response.candidates[0].content.parts[0].text.trim();
+    const result = await model.generateContent(fullPrompt);
+    const response = await result.response;
+    const generatedCode = response.text().trim();
 
     // Limpiar posibles bloques markdown si el modelo los incluyó a pesar de la instrucción
     const cleanCode = generatedCode.replace(/^```[a-z]*\n/i, '').replace(/\n```$/i, '');

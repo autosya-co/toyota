@@ -65,18 +65,14 @@ const isDev = import.meta.env.DEV;
                 Configuración Avanzada (Debug)
               </button>
               
-              <div id="advancedConfig" class="hidden mt-4 grid grid-cols-1 md:grid-cols-3 gap-4 p-4 bg-gray-50 rounded-xl border border-dashed border-gray-200">
-                <div>
-                  <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Project ID</label>
-                  <input type="text" id="cfg_projectId" value="toyotausados" class="w-full px-3 py-2 text-xs border border-gray-200 rounded-lg focus:outline-none" />
+              <div id="advancedConfig" class="hidden mt-4 grid grid-cols-1 md:grid-cols-2 gap-4 p-4 bg-gray-50 rounded-xl border border-dashed border-gray-200">
+                <div class="md:col-span-2">
+                  <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Gemini API Key (AI Studio)</label>
+                  <input type="password" id="cfg_apiKey" placeholder="AIzaSy..." class="w-full px-3 py-2 text-xs border border-gray-200 rounded-lg focus:outline-none" />
                 </div>
-                <div>
-                  <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Location</label>
-                  <input type="text" id="cfg_location" value="us-central1" class="w-full px-3 py-2 text-xs border border-gray-200 rounded-lg focus:outline-none" />
-                </div>
-                <div>
+                <div class="md:col-span-2">
                   <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Model ID</label>
-                  <input type="text" id="cfg_modelId" value="gemini-1.5-flash-001" class="w-full px-3 py-2 text-xs border border-gray-200 rounded-lg focus:outline-none" />
+                  <input type="text" id="cfg_modelId" value="gemini-1.5-flash" class="w-full px-3 py-2 text-xs border border-gray-200 rounded-lg focus:outline-none" />
                 </div>
               </div>
             </div>
@@ -108,7 +104,7 @@ const isDev = import.meta.env.DEV;
               <span class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
               RECEPTOR_IA_READY
             </span>
-            <span class="text-gray-500">v1.3 // VertexAI</span>
+            <span class="text-gray-500">v1.4 // Google AI</span>
           </div>
           <div id="console" class="space-y-2 h-32 overflow-y-auto text-gray-300">
             <div class="text-gray-500">> Esperando instrucciones...</div>
@@ -152,8 +148,7 @@ const isDev = import.meta.env.DEV;
     const fileInput = document.getElementById('filePath');
 
     // Cfg Inputs
-    const cfgProjectId = document.getElementById('cfg_projectId');
-    const cfgLocation = document.getElementById('cfg_location');
+    const cfgApiKey = document.getElementById('cfg_apiKey');
     const cfgModelId = document.getElementById('cfg_modelId');
 
     let lastGeneratedCode = '';
@@ -182,15 +177,14 @@ const isDev = import.meta.env.DEV;
       }
 
       const config = {
-        projectId: cfgProjectId.value,
-        location: cfgLocation.value,
+        apiKey: cfgApiKey.value,
         modelId: cfgModelId.value
       };
 
       btnPreview.disabled = true;
       btnPush.disabled = true;
       log(`Iniciando acción: ${action}...`, 'info');
-      log(`Conf: Project=${config.projectId}, Model=${config.modelId}`, 'warn');
+      log(`Conf: API_KEY present, Model=${config.modelId}`, 'warn');
 
       try {
         const res = await fetch('/api/ai-agent', {
