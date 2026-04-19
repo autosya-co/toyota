@@ -4,28 +4,29 @@ import { getFileContent, updateFileContent } from '../../lib/github';
 
 export const POST: APIRoute = async ({ request }) => {
   try {
-    const { prompt, filePath, action } = await request.json();
+    const { prompt, filePath, action, config } = await request.json();
 
     if (!prompt || !filePath) {
-      return new Response(JSON.stringify({ error: 'Faltan parámetros: prompt o filePath' }), {
+      return new Response(JSON.stringify({ error: 'Faltan parámetros' }), {
         status: 400,
         headers: { 'Content-Type': 'application/json' },
       });
     }
 
-    // 1. Obtener contenido actual del archivo desde GitHub
+    // 1. Obtener contenido actual
     const { content, sha } = await getFileContent(filePath);
 
-    // 2. Inicializar Vertex AI
-    const project = import.meta.env.VERTEX_AI_PROJECT || 'toyotausados';
-    const location = import.meta.env.VERTEX_AI_LOCATION || 'us-central1';
+    // 2. Configuración dinámica para depuración
+    const project = config?.projectId || import.meta.env.VERTEX_AI_PROJECT || 'toyotausados';
+    const location = config?.location || import.meta.env.VERTEX_AI_LOCATION || 'us-central1';
+    const modelId = config?.modelId || 'gemini-1.5-flash-001';
     
-    console.log(`[AI-Agent] Usando Proyecto: ${project}, Ubicación: ${location}`);
+    console.log(`[AI-Agent] Solicitud: Proyecto=${project}, Loc=${location}, Modelo=${modelId}`);
 
     const vertexAI = new VertexAI({ project: project, location: location });
 
     const generativeModel = vertexAI.getGenerativeModel({
-      model: 'gemini-1.5-flash-001',
+      model: modelId,
     });
 
     const fullPrompt = `

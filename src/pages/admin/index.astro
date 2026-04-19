@@ -55,6 +55,32 @@ const isDev = import.meta.env.DEV;
               ></textarea>
             </div>
 
+            <div class="pt-4 border-t border-gray-100">
+              <button 
+                type="button"
+                onclick="document.getElementById('advancedConfig').classList.toggle('hidden')"
+                class="text-xs font-bold text-gray-400 hover:text-gray-600 uppercase tracking-widest flex items-center gap-2"
+              >
+                <i data-lucide="settings" class="w-3 h-3"></i>
+                Configuración Avanzada (Debug)
+              </button>
+              
+              <div id="advancedConfig" class="hidden mt-4 grid grid-cols-1 md:grid-cols-3 gap-4 p-4 bg-gray-50 rounded-xl border border-dashed border-gray-200">
+                <div>
+                  <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Project ID</label>
+                  <input type="text" id="cfg_projectId" value="toyotausados" class="w-full px-3 py-2 text-xs border border-gray-200 rounded-lg focus:outline-none" />
+                </div>
+                <div>
+                  <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Location</label>
+                  <input type="text" id="cfg_location" value="us-central1" class="w-full px-3 py-2 text-xs border border-gray-200 rounded-lg focus:outline-none" />
+                </div>
+                <div>
+                  <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Model ID</label>
+                  <input type="text" id="cfg_modelId" value="gemini-1.5-flash-001" class="w-full px-3 py-2 text-xs border border-gray-200 rounded-lg focus:outline-none" />
+                </div>
+              </div>
+            </div>
+
             <div class="flex gap-3">
               <button 
                 id="btnPreview"
@@ -82,7 +108,7 @@ const isDev = import.meta.env.DEV;
               <span class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
               RECEPTOR_IA_READY
             </span>
-            <span class="text-gray-500">v1.2 // VertexAI</span>
+            <span class="text-gray-500">v1.3 // VertexAI</span>
           </div>
           <div id="console" class="space-y-2 h-32 overflow-y-auto text-gray-300">
             <div class="text-gray-500">> Esperando instrucciones...</div>
@@ -125,6 +151,11 @@ const isDev = import.meta.env.DEV;
     const promptInput = document.getElementById('prompt');
     const fileInput = document.getElementById('filePath');
 
+    // Cfg Inputs
+    const cfgProjectId = document.getElementById('cfg_projectId');
+    const cfgLocation = document.getElementById('cfg_location');
+    const cfgModelId = document.getElementById('cfg_modelId');
+
     let lastGeneratedCode = '';
 
     function log(message, type = 'info') {
@@ -150,16 +181,22 @@ const isDev = import.meta.env.DEV;
         return;
       }
 
+      const config = {
+        projectId: cfgProjectId.value,
+        location: cfgLocation.value,
+        modelId: cfgModelId.value
+      };
+
       btnPreview.disabled = true;
       btnPush.disabled = true;
       log(`Iniciando acción: ${action}...`, 'info');
-      log(`Archivo objetivo: ${filePath}`, 'warn');
+      log(`Conf: Project=${config.projectId}, Model=${config.modelId}`, 'warn');
 
       try {
         const res = await fetch('/api/ai-agent', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ prompt, filePath, action })
+          body: JSON.stringify({ prompt, filePath, action, config })
         });
 
         const data = await res.json();
