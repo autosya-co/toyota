@@ -20,10 +20,12 @@ export const POST: APIRoute = async ({ request }) => {
     const project = import.meta.env.VERTEX_AI_PROJECT || 'toyotausados';
     const location = import.meta.env.VERTEX_AI_LOCATION || 'us-central1';
     
+    console.log(`[AI-Agent] Usando Proyecto: ${project}, Ubicación: ${location}`);
+
     const vertexAI = new VertexAI({ project: project, location: location });
 
     const generativeModel = vertexAI.getGenerativeModel({
-      model: 'gemini-1.5-flash',
+      model: 'gemini-1.5-flash-001',
     });
 
     const fullPrompt = `
