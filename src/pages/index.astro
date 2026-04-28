@@ -36,7 +36,7 @@ try {
   <Navbar />
   <Hero />
 
-  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4 pb-8" id="inventario">
+  <div class="max-w-7xl mx-auto px-1 sm:px-6 lg:px-8 pt-4 pb-8" id="inventario">
     <div class="bg-white p-2 rounded-xl shadow-sm border border-gray-200 mb-8 flex">
       <div class="flex-1 relative flex items-center">
         <i data-lucide="search" class="absolute left-4 text-gray-400 w-5 h-5"></i>
@@ -56,15 +56,15 @@ try {
       </div>
     </div>
 
-    <div id="loading" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 py-10">
+    <div id="loading" class="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-[5px] sm:gap-6 py-10">
       <!-- Skeletons se cargarán aquí por JS para ser consistentes -->
     </div>
 
-    <div id="catalogoGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 hidden">
+    <div id="catalogoGrid" class="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-[5px] sm:gap-6 hidden">
     </div>
 
     <!-- Spinner para Cargar Más -->
-    <div id="loadingMas" class="hidden grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 py-10 mt-4">
+    <div id="loadingMas" class="hidden grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-[5px] sm:gap-6 py-10 mt-4">
     </div>
 
     <div id="sinResultados" class="hidden text-center py-20">
@@ -107,18 +107,19 @@ try {
 
     const renderSkeleton = () => {
       return `
-        <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden flex flex-col animate-pulse">
+        <div class="bg-white rounded-lg sm:rounded-xl shadow-sm border border-gray-200 overflow-hidden flex flex-col animate-pulse">
           <div class="aspect-[4/3] bg-gray-200"></div>
-          <div class="p-5 flex flex-col flex-grow">
-            <div class="h-6 bg-gray-200 rounded w-3/4 mb-4"></div>
-            <div class="h-8 bg-gray-200 rounded w-1/2 mb-6"></div>
-            <div class="grid grid-cols-2 gap-4 mb-6">
+          <div class="p-2 sm:p-5 flex flex-col flex-grow">
+            <div class="h-4 sm:h-6 bg-gray-200 rounded w-3/4 mb-1 sm:mb-4"></div>
+            <div class="h-5 sm:h-8 bg-gray-200 rounded w-1/2 mb-1 sm:mb-6"></div>
+            <div class="h-3 bg-gray-100 rounded w-2/3 sm:hidden"></div>
+            <div class="hidden sm:grid grid-cols-2 gap-4 mb-6">
               <div class="h-4 bg-gray-100 rounded w-full"></div>
               <div class="h-4 bg-gray-100 rounded w-full"></div>
               <div class="h-4 bg-gray-100 rounded w-full"></div>
               <div class="h-4 bg-gray-100 rounded w-full"></div>
             </div>
-            <div class="mt-auto pt-4 border-t border-gray-100 flex gap-2">
+            <div class="hidden sm:flex mt-auto pt-4 border-t border-gray-100 gap-2">
               <div class="h-10 bg-gray-100 rounded flex-1"></div>
             </div>
           </div>
@@ -272,22 +273,26 @@ try {
           }
 
           const tarjeta = `
-            <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-lg transition flex flex-col fade-in">
+            <div class="bg-white rounded-lg sm:rounded-xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-lg transition flex flex-col fade-in">
               <a href="/${carro.ID}/${slugify(carro.Title)}" class="relative aspect-[4/3] bg-gray-100 block group overflow-hidden">
                 <img src="${urlImagen}" alt="${carro.Title}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" loading="lazy" referrerpolicy="no-referrer">
               </a>
-              <div class="p-5 flex flex-col flex-grow">
-                <h2 class="text-lg font-bold text-gray-900 leading-tight mb-2 line-clamp-2">${carro.Title}</h2>
-                <div class="text-2xl font-extrabold text-red-700 mb-4">${formatearDinero(carro.Price || 0)}</div>
+              <div class="p-1.5 sm:p-5 flex flex-col flex-grow">
+                <h2 class="text-[11px] sm:text-lg font-bold text-gray-900 leading-tight mb-0.5 line-clamp-1 sm:line-clamp-2">${carro.Title}</h2>
+                <div class="text-sm sm:text-2xl font-extrabold text-red-700 mb-0.5">${formatearDinero(carro.Price || 0)}</div>
                 
-                <div class="grid grid-cols-2 gap-y-2 text-sm text-gray-600 mb-4 flex-grow">
+                <div class="flex items-center gap-1 text-[10px] text-gray-500 truncate sm:hidden">
+                  <i data-lucide="map-pin" class="w-2.5 h-2.5 flex-shrink-0"></i> ${carro.ciudad_de_la_placa || 'Colombia'}
+                </div>
+
+                <div class="hidden sm:grid grid-cols-2 gap-y-2 text-sm text-gray-600 mt-2 mb-4 flex-grow">
                   <div class="flex items-center gap-1.5"><i data-lucide="calendar" class="w-4 h-4 text-gray-400"></i> ${carro.a_o || 'N/A'}</div>
                   <div class="flex items-center gap-1.5"><i data-lucide="gauge" class="w-4 h-4 text-gray-400"></i> ${carro.Mileage ? formatearKm(carro.Mileage) : '0 km'}</div>
                   <div class="flex items-center gap-1.5"><i data-lucide="settings-2" class="w-4 h-4 text-gray-400"></i> ${carro.Transmission || 'N/A'}</div>
                   <div class="flex items-center gap-1.5"><i data-lucide="map-pin" class="w-4 h-4 text-gray-400"></i> <span class="truncate">${carro.ciudad_de_la_placa || 'Colombia'}</span></div>
                 </div>
                 
-                <div class="mt-auto pt-4 border-t border-gray-100 flex gap-2">
+                <div class="hidden sm:flex mt-auto pt-4 border-t border-gray-100 gap-2">
                    <a href="/${carro.ID}/${slugify(carro.Title)}" class="flex-1 text-center bg-gray-100 hover:bg-gray-200 text-gray-800 font-semibold py-2 rounded transition text-sm flex items-center justify-center">Ver Detalles</a>
                    ${botonEditarHTML}
                 </div>
