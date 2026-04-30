@@ -382,6 +382,15 @@ try {
     }
 
     document.getElementById('buscador').addEventListener('input', aplicarFiltros);
+    document.getElementById('buscador').addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        const idBuscado = e.target.value.trim();
+        const vehiculo = inventarioGlobal.find(v => String(v.ID) === idBuscado);
+        if (vehiculo) {
+          window.location.href = `/${vehiculo.ID}/${slugify(vehiculo.Title)}`;
+        }
+      }
+    });
     document.getElementById('filtroAnio').addEventListener('change', aplicarFiltros);
     document.getElementById('filtroModelo').addEventListener('change', aplicarFiltros);
 
