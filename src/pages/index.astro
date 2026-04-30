@@ -336,7 +336,7 @@ try {
       const ciudad = document.getElementById('filtroCiudad')?.value || '';
 
       inventarioFiltradoGlobal = inventarioGlobal.filter(carro => {
-        const cumpleTexto = (carro.Title || "").toLowerCase().includes(texto) || (carro['Categorías'] && carro['Categorías'].toLowerCase().includes(texto));
+        const cumpleTexto = (carro.Title || "").toLowerCase().includes(texto) || (carro['Categorías'] && carro['Categorías'].toLowerCase().includes(texto)) || (carro.ID && String(carro.ID).includes(texto));
         const cumpleAnio = anio === '' || String(carro.a_o || "").trim() === anio;
         let cumpleModelo = true;
         if (modelo !== '') cumpleModelo = carro['Categorías'] && carro['Categorías'].includes('>' + modelo);
