@@ -28,8 +28,23 @@ try {
   console.error("Error obteniendo vehiculo desde Firebase:", e);
 }
 
-// Si no se encuentra el vehículo → 404
-if (!carro) {
+function esToyota(c: any): boolean {
+  if (!c) return false;
+  const categoria = String(c['Categorías'] || c['Categorias'] || c.categoria || c.Categoria || c.categoriaUnida || '').toLowerCase();
+  const marca = String(c.marca || c.Marca || c.brand || c.Brand || '').toLowerCase();
+  const titulo = String(c.Title || c.titulo || c.title || '').toLowerCase();
+  if (categoria.includes('toyota') || marca.includes('toyota') || titulo.includes('toyota')) return true;
+  const modelosToyota = [
+    'fortuner', 'hilux', 'prado', 'corolla', 'yaris', 'rav4', 'land cruiser', 
+    '4runner', 'tundra', 'tacoma', 'camry', 'fj cruiser', 'rush', 'etios', 
+    'avanza', 'hiace', 'sw4', 'sahara', 'macho', 'burbuja', 'autana', 'carevaca'
+  ];
+  const textoGeneral = `${titulo} ${categoria} ${marca}`.toLowerCase();
+  return modelosToyota.some(m => textoGeneral.includes(m));
+}
+
+// Si no se encuentra el vehículo o no pertenece a Toyota → 404
+if (!carro || !esToyota(carro)) {
   return Astro.redirect('/404');
 }
 const idNum = Number(carro.ID) || 0;
@@ -60,12 +75,13 @@ try {
   const qRel = query(
     collection(db, "toyotausados"), 
     orderBy("ID", "desc"), 
-    limit(30)
+    limit(50)
   );
   const snapRel = await getDocs(qRel);
   relacionados = snapRel.docs
     .map(doc => ({ firebaseId: doc.id, ...doc.data() }))
     .filter(c => {
+      if (!esToyota(c)) return false;
       const idNumRel = Number(c.ID) || 0;
       const isApprovedRel = c.publicado === true || c.publicado === "true";
       const esPendienteRel = idNumRel > 42300 ? !isApprovedRel : (c.publicado === false || c.publicado === "false");

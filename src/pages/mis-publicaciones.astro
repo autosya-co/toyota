@@ -15,14 +15,31 @@ try {
   console.warn("Could not fetch business config in mis-publicaciones.astro:", e);
 }
 
+function esToyota(c: any): boolean {
+  if (!c) return false;
+  const categoria = String(c['Categorías'] || c['Categorias'] || c.categoria || c.Categoria || c.categoriaUnida || '').toLowerCase();
+  const marca = String(c.marca || c.Marca || c.brand || c.Brand || '').toLowerCase();
+  const titulo = String(c.Title || c.titulo || c.title || '').toLowerCase();
+  if (categoria.includes('toyota') || marca.includes('toyota') || titulo.includes('toyota')) return true;
+  const modelosToyota = [
+    'fortuner', 'hilux', 'prado', 'corolla', 'yaris', 'rav4', 'land cruiser', 
+    '4runner', 'tundra', 'tacoma', 'camry', 'fj cruiser', 'rush', 'etios', 
+    'avanza', 'hiace', 'sw4', 'sahara', 'macho', 'burbuja', 'autana', 'carevaca'
+  ];
+  const textoGeneral = `${titulo} ${categoria} ${marca}`.toLowerCase();
+  return modelosToyota.some(m => textoGeneral.includes(m));
+}
+
 // Fetch all publications in SSR for more reliable filtering
-let allFirebaseData = [];
+let allFirebaseData: any[] = [];
 try {
   const snapshot = await getDocs(collection(db, 'toyotausados'));
-  allFirebaseData = snapshot.docs.map(doc => ({ 
-    firebaseDocId: doc.id, 
-    ...doc.data() 
-  }));
+  allFirebaseData = snapshot.docs
+    .map(doc => ({ 
+      firebaseDocId: doc.id, 
+      ...doc.data() 
+    }))
+    .filter(c => esToyota(c));
 } catch (e) {
   console.error("Error fetching publications in SSR:", e);
 }
@@ -112,16 +129,32 @@ try {
         const rawJsonStr = document.getElementById('all-publications-data').textContent;
         const allData = rawJsonStr ? JSON.parse(rawJsonStr) : [];
         
+        const esToyota = (c) => {
+          if (!c) return false;
+          const categoria = String(c['Categorías'] || c['Categorias'] || c.categoria || c.Categoria || c.categoriaUnida || '').toLowerCase();
+          const marca = String(c.marca || c.Marca || c.brand || c.Brand || '').toLowerCase();
+          const titulo = String(c.Title || c.titulo || c.title || '').toLowerCase();
+          if (categoria.includes('toyota') || marca.includes('toyota') || titulo.includes('toyota')) return true;
+          const modelosToyota = [
+            'fortuner', 'hilux', 'prado', 'corolla', 'yaris', 'rav4', 'land cruiser', 
+            '4runner', 'tundra', 'tacoma', 'camry', 'fj cruiser', 'rush', 'etios', 
+            'avanza', 'hiace', 'sw4', 'sahara', 'macho', 'burbuja', 'autana', 'carevaca'
+          ];
+          const textoGeneral = `${titulo} ${categoria} ${marca}`.toLowerCase();
+          return modelosToyota.some(m => textoGeneral.includes(m));
+        };
+
+        const allDataToyota = allData.filter(doc => esToyota(doc));
         let results = [];
         
         if (isAdmin) {
-          // Si es Admin: Mostrar todo
-          results = allData;
+          // Si es Admin: Mostrar todas las publicaciones de Toyota
+          results = allDataToyota;
         } else {
-          // Si es Usuario normal: Filtrar por cualquier variante de campo de correo
+          // Si es Usuario normal: Filtrar por cualquier variante de campo de correo y solo Toyota
           if (!userEmail) throw new Error("No se identificó el correo del usuario.");
           
-          results = allData.filter(doc => {
+          results = allDataToyota.filter(doc => {
             // El nuevo estándar es 'usuario' (todo en minúsculas)
             // Mantenemos fallback para campos antiguos solo por compatibilidad de lectura
             const userFieldValue = (doc.usuario || doc.Usuario || doc.user_email || doc['correo usuario'] || doc['correo_usuario'] || doc.correo || "").toString().toLowerCase().trim();

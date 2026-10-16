@@ -37,3 +37,7 @@ env:
     value: "1:308604847797:web:f8e583ee15c785546ee0fc"
   - variable: PUBLIC_FIREBASE_MEASUREMENT_ID
     value: "G-GVW40Q3LX2"
+  - variable: GEMINI_API_KEY
+    secret: gemini_api_key
+  - variable: GITHUB_TOKEN
+    secret: github_token

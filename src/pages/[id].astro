@@ -26,13 +26,28 @@ try {
   console.error("Error obteniendo vehiculo para redirección:", e);
 }
 
-if (carro) {
+function esToyota(c: any): boolean {
+  if (!c) return false;
+  const categoria = String(c['Categorías'] || c['Categorias'] || c.categoria || c.Categoria || c.categoriaUnida || '').toLowerCase();
+  const marca = String(c.marca || c.Marca || c.brand || c.Brand || '').toLowerCase();
+  const titulo = String(c.Title || c.titulo || c.title || '').toLowerCase();
+  if (categoria.includes('toyota') || marca.includes('toyota') || titulo.includes('toyota')) return true;
+  const modelosToyota = [
+    'fortuner', 'hilux', 'prado', 'corolla', 'yaris', 'rav4', 'land cruiser', 
+    '4runner', 'tundra', 'tacoma', 'camry', 'fj cruiser', 'rush', 'etios', 
+    'avanza', 'hiace', 'sw4', 'sahara', 'macho', 'burbuja', 'autana', 'carevaca'
+  ];
+  const textoGeneral = `${titulo} ${categoria} ${marca}`.toLowerCase();
+  return modelosToyota.some(m => textoGeneral.includes(m));
+}
+
+if (carro && esToyota(carro)) {
   // Función slugify idéntica a la usada en la ficha para consistencia de URLs
   const slugify = (t: any) => t ? t.toString().toLowerCase().trim().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/\s+/g,'-').replace(/[^\w\-]+/g,'').replace(/\-\-+/g,'-') : 'auto';
   const url = `/${carro.ID}/${slugify(carro.Title)}`;
   return Astro.redirect(url);
 }
 
-// Si no se encuentra el ID, redirigir al home
+// Si no se encuentra el ID o no es Toyota, redirigir al home
 return Astro.redirect('/');
 ---

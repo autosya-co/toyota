@@ -1,6 +1,6 @@
 import { Octokit } from 'octokit';
 
-const GITHUB_TOKEN = import.meta.env.GITHUB_TOKEN;
+const GITHUB_TOKEN = import.meta.env.GITHUB_TOKEN || process.env.GITHUB_TOKEN;
 const OWNER = 'autosya-co';
 const REPO = 'toyota';
 

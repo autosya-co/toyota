@@ -8,12 +8,28 @@ import Hero from '../components/Hero.astro';
 import { db } from '../lib/firebase';
 import { collection, getDocs } from 'firebase/firestore';
 
+function esToyota(carro: any): boolean {
+  if (!carro) return false;
+  const categoria = String(carro['Categorías'] || carro['Categorias'] || carro.categoria || carro.Categoria || carro.categoriaUnida || '').toLowerCase();
+  const marca = String(carro.marca || carro.Marca || carro.brand || carro.Brand || '').toLowerCase();
+  const titulo = String(carro.Title || carro.titulo || carro.title || '').toLowerCase();
+  if (categoria.includes('toyota') || marca.includes('toyota') || titulo.includes('toyota')) return true;
+  const modelosToyota = [
+    'fortuner', 'hilux', 'prado', 'corolla', 'yaris', 'rav4', 'land cruiser', 
+    '4runner', 'tundra', 'tacoma', 'camry', 'fj cruiser', 'rush', 'etios', 
+    'avanza', 'hiace', 'sw4', 'sahara', 'macho', 'burbuja', 'autana', 'carevaca'
+  ];
+  const textoGeneral = `${titulo} ${categoria} ${marca}`.toLowerCase();
+  return modelosToyota.some(m => textoGeneral.includes(m));
+}
+
 let firebaseData: any[] = [];
 try {
   const snapshot = await getDocs(collection(db, 'toyotausados'));
   firebaseData = snapshot.docs
     .map(doc => ({ firebaseId: doc.id, ...doc.data() }))
     .filter(carro => {
+      if (!esToyota(carro)) return false;
       const idNum = Number(carro.ID) || 0;
       const isApproved = carro.publicado === true || carro.publicado === "true";
       // Si el ID es mayor a 42300 (anuncios nuevos), solo se muestra si está aprobado.
@@ -147,12 +163,30 @@ try {
 
         mostrarSkeletons('loading', 8);
 
-        // Filtro: Solo mostrar vehículos que tengan ID, Título, que su categoría incluya "Toyota" y que estén publicados
+        const esToyota = (carro) => {
+          if (!carro) return false;
+          const categoria = String(carro['Categorías'] || carro['Categorias'] || carro.categoria || carro.Categoria || carro.categoriaUnida || '').toLowerCase();
+          const marca = String(carro.marca || carro.Marca || carro.brand || carro.Brand || '').toLowerCase();
+          const titulo = String(carro.Title || carro.titulo || carro.title || '').toLowerCase();
+          if (categoria.includes('toyota') || marca.includes('toyota') || titulo.includes('toyota')) return true;
+          const modelosToyota = [
+            'fortuner', 'hilux', 'prado', 'corolla', 'yaris', 'rav4', 'land cruiser', 
+            '4runner', 'tundra', 'tacoma', 'camry', 'fj cruiser', 'rush', 'etios', 
+            'avanza', 'hiace', 'sw4', 'sahara', 'macho', 'burbuja', 'autana', 'carevaca'
+          ];
+          const textoGeneral = `${titulo} ${categoria} ${marca}`.toLowerCase();
+          return modelosToyota.some(m => textoGeneral.includes(m));
+        };
+
+        // Filtro: Solo mostrar vehículos que pertenezcan a Toyota, tengan ID, Título y estén publicados
         inventarioGlobal = results.filter(carro => {
+          if (!carro || !carro.ID || !carro.Title) return false;
+          if (!esToyota(carro)) return false;
+
           const idNum = Number(carro.ID) || 0;
           const isApproved = carro.publicado === true || carro.publicado === "true";
           if (idNum > 42300) return isApproved;
-          return carro.ID && carro.Title && (carro['Categorías'] || "").toLowerCase().includes('toyota') && carro.publicado !== false && carro.publicado !== "false";
+          return carro.publicado !== false && carro.publicado !== "false";
         });
         llenarFiltros(inventarioGlobal);
         document.getElementById('loading').classList.add('hidden');
