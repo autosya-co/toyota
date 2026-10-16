@@ -1,0 +1,7 @@
+{
+  "name": "Toyota Usados",
+  "description": "Plataforma de compra, venta y catálogo de vehículos Toyota usados en Colombia.",
+  "capabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

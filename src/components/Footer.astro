@@ -2,8 +2,15 @@
 import { db } from '../lib/firebase';
 import { doc, getDoc } from 'firebase/firestore';
 
-const configSnap = await getDoc(doc(db, "configuracion", "negocio"));
-const config = configSnap.exists() ? configSnap.data() : {};
+let config: any = {};
+try {
+  const configSnap = await getDoc(doc(db, "configuracion", "negocio"));
+  if (configSnap.exists()) {
+    config = configSnap.data();
+  }
+} catch (e) {
+  // Graceful fallback when database is offline or during SSR build
+}
 
 const whatsappNumber = config.whatsapp || "573202832616";
 const phoneNumber = config.telefono || "3202832616";

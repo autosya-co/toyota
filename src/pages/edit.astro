@@ -33,8 +33,15 @@ if (!idVehiculo) {
     errorMsg = "Error al conectar con la base de datos.";
   }
 }
-const configSnap = await getDoc(doc(db, "configuracion", "negocio"));
-const config = configSnap.exists() ? configSnap.data() : {};
+let config: any = {};
+try {
+  const configSnap = await getDoc(doc(db, "configuracion", "negocio"));
+  if (configSnap.exists()) {
+    config = configSnap.data();
+  }
+} catch (e) {
+  console.warn("Could not fetch business config in edit.astro:", e);
+}
 const urlAppsScriptServer = config.url_apps_script || "";
 const wmConfig = {
   url: config.watermark_url || '/marca_de_agua_toyota_rojo.jpeg',

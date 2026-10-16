@@ -4,8 +4,15 @@ import Navbar from '../../components/Navbar.astro';
 import { db } from '../../lib/firebase';
 import { doc, getDoc } from 'firebase/firestore';
 
-const configSnap = await getDoc(doc(db, "configuracion", "negocio"));
-const config = configSnap.exists() ? configSnap.data() : {};
+let config: any = {};
+try {
+  const configSnap = await getDoc(doc(db, "configuracion", "negocio"));
+  if (configSnap.exists()) {
+    config = configSnap.data();
+  }
+} catch (e) {
+  console.warn("Could not fetch business config in configuracion.astro:", e);
+}
 ---
 
 <Layout title="Configuración del Negocio">

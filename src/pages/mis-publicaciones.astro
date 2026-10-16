@@ -5,8 +5,15 @@ import Navbar from '../components/Navbar.astro';
 import { db } from '../lib/firebase';
 import { collection, getDocs, doc, getDoc } from 'firebase/firestore';
 
-const configSnap = await getDoc(doc(db, "configuracion", "negocio"));
-const urlAppsScriptServer = configSnap.exists() ? configSnap.data().url_apps_script : "";
+let urlAppsScriptServer = "";
+try {
+  const configSnap = await getDoc(doc(db, "configuracion", "negocio"));
+  if (configSnap.exists()) {
+    urlAppsScriptServer = configSnap.data().url_apps_script || "";
+  }
+} catch (e) {
+  console.warn("Could not fetch business config in mis-publicaciones.astro:", e);
+}
 
 // Fetch all publications in SSR for more reliable filtering
 let allFirebaseData = [];
